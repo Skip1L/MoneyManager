@@ -4,7 +4,7 @@ namespace Domain.Entities
 {
     public class User : IdentityUser<Guid>, IBaseEntity
     {
-        public Guid Id { get; set; } 
+        public Guid Id { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public bool IsDeleted { get; set; }
