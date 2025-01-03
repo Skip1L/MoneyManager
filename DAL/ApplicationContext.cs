@@ -27,13 +27,10 @@ namespace DAL
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.ApplyConfiguration(new UserConfiguration());
-            modelBuilder.ApplyConfiguration(new ConnectionEventConfiguration());
-            modelBuilder.ApplyConfiguration(new SlideConfiguration());
-            modelBuilder.ApplyConfiguration(new ConfigurationConfiguration());
-            modelBuilder.ApplyConfiguration(new WorkShiftConfiguration());
-            modelBuilder.ApplyConfiguration(new ConfigurationDetailsConfiguration());
-            modelBuilder.ApplyConfiguration(new DetailConfiguration());
-            modelBuilder.ApplyConfiguration(new DetailTypeConfiguration());
+            modelBuilder.ApplyConfiguration(new BudgetConfiguration());
+            modelBuilder.ApplyConfiguration(new IncomeConfiguration());
+            modelBuilder.ApplyConfiguration(new ExpenseConfiguration());
+            modelBuilder.ApplyConfiguration(new CategoryConfiguration());
         }
     }
 }

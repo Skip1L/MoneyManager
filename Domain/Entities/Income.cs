@@ -8,7 +8,6 @@
         public bool IsDeleted { get; set; }
         public decimal Amount { get; set; }
         public DateTime IncomeDate { get; set; }
-        public string Source { get; set; }
         public string Description { get; set; }
         public Guid CategoryId { get; set; }
         public Guid BudgetId { get; set; }
