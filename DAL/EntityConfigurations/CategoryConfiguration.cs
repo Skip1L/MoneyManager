@@ -8,7 +8,7 @@ namespace DAL.EntityConfigurations
     {
         public void Configure(EntityTypeBuilder<Category> builder)
         {
-            builder.ToTable("categories");
+            builder.ToTable("Categories");
             builder.HasKey(u => u.Id);
 
             builder.HasMany(c => c.Expenses)

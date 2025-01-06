@@ -1,4 +1,5 @@
-﻿using DAL.EntityConfigurations;
+﻿using System.ComponentModel;
+using DAL.EntityConfigurations;
 using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -31,6 +32,11 @@ namespace DAL
             modelBuilder.ApplyConfiguration(new IncomeConfiguration());
             modelBuilder.ApplyConfiguration(new ExpenseConfiguration());
             modelBuilder.ApplyConfiguration(new CategoryConfiguration());
+        }
+
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            configurationBuilder.Properties<DateOnly>().HaveConversion<DateOnlyConverter>();
         }
     }
 }

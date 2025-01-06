@@ -8,7 +8,7 @@ namespace DAL.EntityConfigurations
     {
         public void Configure(EntityTypeBuilder<Expense> builder)
         {
-            builder.ToTable("expenses");
+            builder.ToTable("Expenses");
             builder.HasKey(e => e.Id);
 
             builder.HasOne(e => e.Category)
@@ -18,7 +18,6 @@ namespace DAL.EntityConfigurations
             builder.HasOne(e => e.Budget)
                 .WithMany(b =>  b.Expenses)
                 .HasForeignKey(e =>  e.BudgetId);
-
         }
 
     }
