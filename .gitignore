@@ -47,3 +47,4 @@ launch.json
 # Specific developers files
 appsettings.Max.json
 *.jpg
+/MoneyManagerAPI/Properties/launchSettings.json
