@@ -116,7 +116,7 @@ namespace Presentation.Controllers
 
         [HttpPut("unlockUser")]
         [Authorize(Roles = Roles.ADMINISTRATOR)]
-        public async Task<IActionResult> SetLockoutEnd([FromBody] string userToUnlock)
+        public async Task<IActionResult> UnlockUser([FromBody] string userToUnlock)
         {
             var user = await _userManager.FindByNameAsync(userToUnlock);
 
