@@ -114,30 +114,28 @@ namespace Presentation.Controllers
             return Ok();
         }
 
-        [HttpPost("admin/setLockoutEnd")]
+        [HttpPut("unlockUser")]
         [Authorize(Roles = Roles.ADMINISTRATOR)]
-        public async Task<IActionResult> SetLockoutEnd([FromBody] SetLockoutEndDTO setLockoutEndDTO)
+        public async Task<IActionResult> SetLockoutEnd([FromBody] string userToUnlock)
         {
-            var user = await _userManager.FindByIdAsync(setLockoutEndDTO.UserId.ToString());
+            var user = await _userManager.FindByNameAsync(userToUnlock);
 
             if (user == null)
             {
-                _logger.LogWarning("User not found: {UserId}", setLockoutEndDTO.UserId);
+                _logger.LogWarning("User not found: {UserId}", userToUnlock);
                 return NotFound("User not found.");
             }
 
-            user.LockoutEnd = setLockoutEndDTO.LockoutEnd;
-
-            var result = await _userManager.UpdateAsync(user);
+            var result = await _userManager.SetLockoutEndDateAsync(user, null);
+            await _userManager.ResetAccessFailedCountAsync(user);
 
             if (!result.Succeeded)
             {
-                _logger.LogWarning($"Error updating LockoutEnd for user: {setLockoutEndDTO.UserId}");
+                _logger.LogWarning($"Error updating LockoutEnd for user: {user.UserName}. {result.Errors.Select(e => e.Description)}");
                 return BadRequest("Failed to update LockoutEnd.");
             }
 
-            _logger.LogInformation($"Successfully updated LockoutEnd for user: {setLockoutEndDTO.UserId}");
-            return Ok("LockoutEnd updated successfully.");
+            return Ok();
         }
 
         private async Task<SuccessSignInDTO> GetUserProfile(User user, List<string> roles)
