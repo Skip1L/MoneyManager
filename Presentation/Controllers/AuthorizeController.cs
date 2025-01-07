@@ -4,6 +4,7 @@ using System.Text;
 using Domain.Constants;
 using Domain.Entities;
 using DTOs.AuthorizationDTOs;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +16,12 @@ namespace Presentation.Controllers
     [ApiController]
     [Authorize]
     [Route("api/v1/[controller]")]
-    public class AuthorizeController(ILogger<AuthorizeController> logger, UserManager<User> userManager, SignInManager<User> signInManager) : ControllerBase
+    public class AuthorizeController(ILogger<AuthorizeController> logger, UserManager<User> userManager, SignInManager<User> signInManager, IValidator<SignUpDTO> validator) : ControllerBase
     {
         private readonly ILogger<AuthorizeController> _logger = logger;
         private readonly UserManager<User> _userManager = userManager;
         private readonly SignInManager<User> _signInManager = signInManager;
+        private readonly IValidator<SignUpDTO> _signUpDTOValidator = validator;
 
         [HttpPost("signIn")]
         [AllowAnonymous]
@@ -34,7 +36,7 @@ namespace Presentation.Controllers
 
             var roles = await _userManager.GetRolesAsync(user);
 
-            var isAdministrator = !roles.Contains(Roles.ADMINISTRATOR);
+            var isAdministrator = roles.Contains(Roles.ADMINISTRATOR);
 
             var signInResult = await _signInManager.PasswordSignInAsync(user, signInDTO.Password, false, !isAdministrator);
 
@@ -50,6 +52,60 @@ namespace Presentation.Controllers
             _logger.LogWarning($"Incorrect password for user : {signInDTO.UserName}");
 
             return BadRequest("Incorrect email or password!");
+        }
+
+        [HttpPost("signUp")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SignUp([FromBody] SignUpDTO signUpDTO)
+        {
+            var validationResult = await _signUpDTOValidator.ValidateAsync(signUpDTO);
+
+            if (!validationResult.IsValid)
+            {
+                foreach (var error in validationResult.Errors)
+                {
+                    _logger.LogWarning($"Validation failed for {error.PropertyName}: {error.ErrorMessage}");
+                }
+
+                return BadRequest(validationResult.Errors.FirstOrDefault().ErrorMessage);
+            }
+
+            _logger.LogInformation("SignUpDTO validated successfully.");
+
+            var existingUser = await _userManager.FindByEmailAsync(signUpDTO.Email);
+            if (existingUser != null)
+            {
+                return Conflict(new { message = "A user with this email already exists." });
+            }
+
+            var existingUsername = await _userManager.FindByNameAsync(signUpDTO.Username);
+            if (existingUsername != null)
+            {
+                return Conflict(new { message = "A user with this username already exists." });
+            }
+
+            var user = new User
+            {
+                UserName = signUpDTO.Username,
+                Email = signUpDTO.Email,
+                FirstName = signUpDTO.FirstName,
+                LastName = signUpDTO.LastName,
+                DateOfBirth = signUpDTO.DateOfBirth,
+                PhoneNumber = signUpDTO.PhoneNumber,
+                CreatedAt = DateTime.UtcNow
+            };
+
+
+            var result = await _userManager.CreateAsync(user, signUpDTO.Password);
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
+            }
+
+            await _userManager.AddToRoleAsync(user, Roles.DEFAULT_USER);
+
+            return Ok("User registered successfully!");
         }
 
         private async Task<SuccessSignInDTO> GetUserProfile(User user, List<string> roles)
