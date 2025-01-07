@@ -1,9 +1,7 @@
+using System.Text;
 using DAL;
 using DAL.Repositories;
 using Domain.Entities;
-using DTOs.AuthorizationDTOs;
-using DTOs.AuthorizationDTOs.Validators;
-using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +23,6 @@ builder.Services.AddDbContext<ApplicationContext>(options =>
 });
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-builder.Services.AddScoped<IValidator<SignUpDTO>, SignUpDTOValidator>();
 
 builder.Services.AddControllers();
 
@@ -90,7 +87,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = AuthOptionsHelper.GetIssuer(),
         ValidAudience = AuthOptionsHelper.GetAudience(),
-        IssuerSigningKey = AuthOptionsHelper.GetSymmetricSecurityKey(),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(AuthOptionsHelper.GetSymmetricSecurityKey())),
         RequireExpirationTime = true
     };
 });
