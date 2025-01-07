@@ -3,8 +3,8 @@ using System.Security.Claims;
 using System.Text;
 using Domain.Constants;
 using Domain.Entities;
+using Domain.Helpers;
 using DTOs.AuthorizationDTOs;
-using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,12 +16,11 @@ namespace Presentation.Controllers
     [ApiController]
     [Authorize]
     [Route("api/v1/[controller]")]
-    public class AuthorizeController(ILogger<AuthorizeController> logger, UserManager<User> userManager, SignInManager<User> signInManager, IValidator<SignUpDTO> validator) : ControllerBase
+    public class AuthorizeController(ILogger<AuthorizeController> logger, UserManager<User> userManager, SignInManager<User> signInManager) : ControllerBase
     {
         private readonly ILogger<AuthorizeController> _logger = logger;
         private readonly UserManager<User> _userManager = userManager;
         private readonly SignInManager<User> _signInManager = signInManager;
-        private readonly IValidator<SignUpDTO> _signUpDTOValidator = validator;
 
         [HttpPost("signIn")]
         [AllowAnonymous]
@@ -58,35 +57,42 @@ namespace Presentation.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> SignUp([FromBody] SignUpDTO signUpDTO)
         {
-            var validationResult = await _signUpDTOValidator.ValidateAsync(signUpDTO);
-
-            if (!validationResult.IsValid)
+            if (string.IsNullOrEmpty(signUpDTO.FirstName)
+                || string.IsNullOrEmpty(signUpDTO.LastName)
+                || !PhoneNumberHelper.IsPhoneNumberValid(signUpDTO.PhoneNumber)
+                || !EmailHelper.IsEmailValid(signUpDTO.Email)
+                || !RolesHelper.IsRolesValid(signUpDTO.Roles)
+                || !PasswordHelper.IsPasswordValid(signUpDTO.Password)
+                || !DateOfBirthHelper.IsDateOfBirthValid(signUpDTO.DateOfBirth))
             {
-                foreach (var error in validationResult.Errors)
-                {
-                    _logger.LogWarning($"Validation failed for {error.PropertyName}: {error.ErrorMessage}");
-                }
-
-                return BadRequest(validationResult.Errors.FirstOrDefault().ErrorMessage);
+                return BadRequest("An error occured while validating inputs");
             }
-
-            _logger.LogInformation("SignUpDTO validated successfully.");
 
             var existingUser = await _userManager.FindByEmailAsync(signUpDTO.Email);
             if (existingUser != null)
             {
-                return Conflict(new { message = "A user with this email already exists." });
+                return Conflict("A user with this email already exists.");
             }
 
-            var existingUsername = await _userManager.FindByNameAsync(signUpDTO.Username);
-            if (existingUsername != null)
+            if (signUpDTO.Roles.Contains("ADMINISTRATOR"))
             {
-                return Conflict(new { message = "A user with this username already exists." });
+                var currentUser = HttpContext.User;
+                if (currentUser.Identity.IsAuthenticated)
+                {
+                    if (!currentUser.IsInRole("ADMINISTRATOR"))
+                    {
+                        return Forbid("Only admins can create new admin accounts.");
+                    }
+                }
+                else
+                {
+                    return Unauthorized("You must be authorized to create an admin account.");
+                }
             }
 
             var user = new User
             {
-                UserName = signUpDTO.Username,
+                UserName = signUpDTO.Email,
                 Email = signUpDTO.Email,
                 FirstName = signUpDTO.FirstName,
                 LastName = signUpDTO.LastName,
@@ -95,17 +101,17 @@ namespace Presentation.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
-
             var result = await _userManager.CreateAsync(user, signUpDTO.Password);
 
             if (!result.Succeeded)
             {
-                return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
+                _logger.LogWarning($"User are not created : {result.Errors.Select(e => e.Description)}");
+                return BadRequest("User are not created, because of unknown error");
             }
 
-            await _userManager.AddToRoleAsync(user, Roles.DEFAULT_USER);
+            await _userManager.AddToRolesAsync(user, signUpDTO.Roles);
 
-            return Ok("User registered successfully!");
+            return Ok();
         }
 
         [HttpPost("admin/setLockoutEnd")]
@@ -156,13 +162,13 @@ namespace Presentation.Controllers
         {
             claims.Add(new Claim(ClaimTypes.Name, user.UserName));
 
-            var envKey = "sjgienghs;vcsfrtuifs1)d56fdsaw67";
+            var envKey = Environment.GetEnvironmentVariable("ISSUER_KEY");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(envKey));
             var exp = 7200;
 
             var jwt = new JwtSecurityToken(
-               issuer: "MoneyTrackerIssuer",
-               audience: "MoneyTrackerHost",
+               issuer: Environment.GetEnvironmentVariable("ISSUER"),
+               audience: Environment.GetEnvironmentVariable("AUDIENCE"),
                claims: claims,
                expires: DateTime.UtcNow.AddSeconds(exp),
                notBefore: DateTime.UtcNow,
