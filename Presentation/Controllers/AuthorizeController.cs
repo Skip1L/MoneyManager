@@ -108,6 +108,32 @@ namespace Presentation.Controllers
             return Ok("User registered successfully!");
         }
 
+        [HttpPost("admin/setLockoutEnd")]
+        [Authorize(Roles = Roles.ADMINISTRATOR)]
+        public async Task<IActionResult> SetLockoutEnd([FromBody] SetLockoutEndDTO setLockoutEndDTO)
+        {
+            var user = await _userManager.FindByIdAsync(setLockoutEndDTO.UserId.ToString());
+
+            if (user == null)
+            {
+                _logger.LogWarning("User not found: {UserId}", setLockoutEndDTO.UserId);
+                return NotFound("User not found.");
+            }
+
+            user.LockoutEnd = setLockoutEndDTO.LockoutEnd;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning($"Error updating LockoutEnd for user: {setLockoutEndDTO.UserId}");
+                return BadRequest("Failed to update LockoutEnd.");
+            }
+
+            _logger.LogInformation($"Successfully updated LockoutEnd for user: {setLockoutEndDTO.UserId}");
+            return Ok("LockoutEnd updated successfully.");
+        }
+
         private async Task<SuccessSignInDTO> GetUserProfile(User user, List<string> roles)
         {
             var claims = await _userManager.GetClaimsAsync(user);
