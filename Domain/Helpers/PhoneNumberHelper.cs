@@ -4,6 +4,7 @@ namespace Domain.Helpers
 {
     public static class PhoneNumberHelper
     {
+        private const string _validPhoneNumberPattern = @"^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,7}$";
         public static bool IsPhoneNumberValid(string phoneNumber)
         {
             if (string.IsNullOrEmpty(phoneNumber))
@@ -11,8 +12,7 @@ namespace Domain.Helpers
                 return false;
             }
 
-            string pattern = @"^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,7}$";
-            return Regex.IsMatch(phoneNumber, pattern);
+            return Regex.IsMatch(phoneNumber, _validPhoneNumberPattern);
         }
     }
 }

@@ -126,30 +126,24 @@ namespace Presentation.Controllers
             var claims = await _userManager.GetClaimsAsync(user);
             roles.ForEach(role => claims.Add(new Claim(ClaimTypes.Role, role)));
 
-            return new SuccessSignInDTO
-            {
-                Created = user.CreatedAt,
-                Email = user.Email,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Id = user.Id,
-                PhoneNumber = user.PhoneNumber,
-                Roles = roles,
-                Token = GetToken(user, [.. claims])
-            };
+            var signedInUserDto = _mapper.Map<SuccessSignInDTO>(user);
+            signedInUserDto.Roles = roles;
+            signedInUserDto.Token = GetToken(user, [.. claims]);
+
+            return signedInUserDto;
         }
 
         private static string GetToken(IdentityUser<Guid> user, List<Claim> claims)
         {
             claims.Add(new Claim(ClaimTypes.Name, user.UserName));
 
-            var envKey = Environment.GetEnvironmentVariable("API_KEY");
+            var envKey =  AuthOptionsHelper.GetSecretKey();
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(envKey));
-            var exp = 7200;
+            var exp = AuthOptionsHelper.GetTokenExpirationTime();
 
             var jwt = new JwtSecurityToken(
-               issuer: Environment.GetEnvironmentVariable("ISSUER"),
-               audience: Environment.GetEnvironmentVariable("AUDIENCE"),
+               issuer: AuthOptionsHelper.GetIssuer(),
+               audience: AuthOptionsHelper.GetAudience(),
                claims: claims,
                expires: DateTime.UtcNow.AddSeconds(exp),
                notBefore: DateTime.UtcNow,

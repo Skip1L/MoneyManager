@@ -1,7 +1,4 @@
-﻿using Microsoft.IdentityModel.Tokens;
-using System.Text;
-
-namespace MoneyManagerAPI.Helpers
+﻿namespace Domain.Helpers
 {
     public static class AuthOptionsHelper
     {
@@ -18,6 +15,17 @@ namespace MoneyManagerAPI.Helpers
         public static string GetSecretKey()
         {
             return Environment.GetEnvironmentVariable("API_KEY") ?? "sjgienghs;vcsfrtuifs1)d56fdsaw67";
+        }
+
+        public static int GetTokenExpirationTime()
+        {
+            int result = 7200;
+            if (int.TryParse(Environment.GetEnvironmentVariable("TOKEN_EXPIRATION_TIME"), out int myNumber))
+            {
+                result = myNumber;
+            }
+
+            return result;
         }
     }
 }

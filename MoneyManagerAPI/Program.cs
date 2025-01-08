@@ -2,6 +2,7 @@ using System.Text;
 using DAL;
 using DAL.Repositories;
 using Domain.Entities;
+using Domain.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

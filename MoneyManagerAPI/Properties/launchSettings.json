@@ -16,16 +16,17 @@
         "launchUrl": "swagger",
         "applicationUrl": "https://localhost:5000;http://localhost:5001",
         "environmentVariables": {
-            "ASPNETCORE_ENVIRONMENT": "Development",
-            "MoneyManagerDBConnectionString": "Server=(localdb)\\MSSQLLocalDB;Database=MoneyManagerDB;Trusted_Connection=True;",
             "ADMIN_EMAIL": "illja.skipar@gmail.com",
-            "ADMIN_PASSWORD": "Kakakadu666!",
             "ADMIN_FIRST_NAME": "Illia",
             "ADMIN_LAST_NAME": "Skipar",
+            "ADMIN_PASSWORD": "Kakakadu666!",
             "ADMIN_PHONE_NUMBER": "+380997379641",
-            "ISSUER": "MoneyTrackerIssuer",
+            "API_KEY": "sjgienghs;vcsfrtuifs1)d56fdsaw67",
+            "ASPNETCORE_ENVIRONMENT": "Development",
             "AUDIENCE": "MoneyTrackerHost",
-            "API_KEY": "sjgienghs;vcsfrtuifs1)d56fdsaw67"
+            "ISSUER": "MoneyTrackerIssuer",
+            "MoneyManagerDBConnectionString": "Server=(localdb)\\MSSQLLocalDB;Database=MoneyManagerDB;Trusted_Connection=True;",
+            "TOKEN_EXPIRATION_TIME": "7200"
         }
     }
   }
