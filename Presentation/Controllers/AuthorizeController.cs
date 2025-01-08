@@ -65,7 +65,7 @@ namespace Presentation.Controllers
                 || !EmailHelper.IsEmailValid(signUpDTO.Email)
                 || !RolesHelper.IsRolesValid(signUpDTO.Roles)
                 || !PasswordHelper.IsPasswordValid(signUpDTO.Password)
-                || !DateOfBirthHelper.IsDateOfBirthValid(signUpDTO.DateOfBirth))
+                || signUpDTO.DateOfBirth > DateTime.UtcNow)
             {
                 return BadRequest();
             }
@@ -76,16 +76,10 @@ namespace Presentation.Controllers
                 return Conflict();
             }
 
-            if (signUpDTO.Roles.Contains(Roles.Administrator))
+            if (signUpDTO.Roles.Contains(Roles.Administrator) 
+                && HttpContext.User?.IsInRole(Roles.Administrator) != true)
             {
-                if (HttpContext.User?.IsInRole(Roles.Administrator) != true)
-                {
-                    return Forbid();
-                }
-                else
-                {
-                    return Unauthorized();
-                }
+                return Forbid();
             }
 
             var user = _mapper.Map<User>(signUpDTO);
@@ -95,7 +89,7 @@ namespace Presentation.Controllers
             if (!result.Succeeded)
             {
                 _logger.LogWarning($"User are not created : {result.Errors.Select(e => e.Description)}");
-                return BadRequest("User are not created, because of unknown error");
+                return BadRequest();
             }
 
             await _userManager.AddToRolesAsync(user, signUpDTO.Roles);
@@ -112,7 +106,7 @@ namespace Presentation.Controllers
             if (user == null)
             {
                 _logger.LogWarning("User not found: {UserId}", userToUnlock);
-                return NotFound("User not found.");
+                return NotFound();
             }
 
             var result = await _userManager.SetLockoutEndDateAsync(user, null);
@@ -121,7 +115,7 @@ namespace Presentation.Controllers
             if (!result.Succeeded)
             {
                 _logger.LogWarning($"Error updating LockoutEnd for user: {user.UserName}. {result.Errors.Select(e => e.Description)}");
-                return BadRequest("Failed to update LockoutEnd.");
+                return BadRequest();
             }
 
             return Ok();

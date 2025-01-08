@@ -6,10 +6,13 @@ namespace Domain.Helpers
     {
         public static bool IsPhoneNumberValid(string phoneNumber)
         {
-            if (string.IsNullOrEmpty(phoneNumber)) return false;
+            if (string.IsNullOrEmpty(phoneNumber))
+            {
+                return false;
+            }
+
             string pattern = @"^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,7}$";
-            Regex regex = new(pattern, RegexOptions.Compiled);
-            return regex.IsMatch(phoneNumber);
+            return Regex.IsMatch(phoneNumber, pattern);
         }
     }
 }

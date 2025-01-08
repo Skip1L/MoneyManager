@@ -6,7 +6,11 @@ namespace Domain.Helpers
     {
         public static bool IsRolesValid(List<string> roles)
         {
-            if(roles.Count == 0) return false;
+            if(roles.Count == 0)
+            {
+                return false;
+            }
+
             var existedRoles = typeof(Roles).GetFields()
                 .Select(field => field.GetValue(null)?.ToString())
                 .Where(roleName => !string.IsNullOrEmpty(roleName))
