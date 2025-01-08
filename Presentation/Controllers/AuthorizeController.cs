@@ -1,6 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using AutoMapper;
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Helpers;
@@ -16,11 +17,12 @@ namespace Presentation.Controllers
     [ApiController]
     [Authorize]
     [Route("api/v1/[controller]")]
-    public class AuthorizeController(ILogger<AuthorizeController> logger, UserManager<User> userManager, SignInManager<User> signInManager) : ControllerBase
+    public class AuthorizeController(ILogger<AuthorizeController> logger, UserManager<User> userManager, SignInManager<User> signInManager, IMapper mapper) : ControllerBase
     {
         private readonly ILogger<AuthorizeController> _logger = logger;
         private readonly UserManager<User> _userManager = userManager;
         private readonly SignInManager<User> _signInManager = signInManager;
+        private readonly IMapper _mapper = mapper;
 
         [HttpPost("signIn")]
         [AllowAnonymous]
@@ -30,12 +32,12 @@ namespace Presentation.Controllers
 
             if (user == null)
             {
-                return BadRequest("Incorrect email or password!");
+                return BadRequest();
             }
 
             var roles = await _userManager.GetRolesAsync(user);
 
-            var isAdministrator = roles.Contains(Roles.ADMINISTRATOR);
+            var isAdministrator = roles.Contains(Roles.Administrator);
 
             var signInResult = await _signInManager.PasswordSignInAsync(user, signInDTO.Password, false, !isAdministrator);
 
@@ -50,7 +52,7 @@ namespace Presentation.Controllers
 
             _logger.LogWarning($"Incorrect password for user : {signInDTO.UserName}");
 
-            return BadRequest("Incorrect email or password!");
+            return BadRequest();
         }
 
         [HttpPost("signUp")]
@@ -65,41 +67,28 @@ namespace Presentation.Controllers
                 || !PasswordHelper.IsPasswordValid(signUpDTO.Password)
                 || !DateOfBirthHelper.IsDateOfBirthValid(signUpDTO.DateOfBirth))
             {
-                return BadRequest("An error occured while validating inputs");
+                return BadRequest();
             }
 
             var existingUser = await _userManager.FindByEmailAsync(signUpDTO.Email);
             if (existingUser != null)
             {
-                return Conflict("A user with this email already exists.");
+                return Conflict();
             }
 
-            if (signUpDTO.Roles.Contains("ADMINISTRATOR"))
+            if (signUpDTO.Roles.Contains(Roles.Administrator))
             {
-                var currentUser = HttpContext.User;
-                if (currentUser.Identity.IsAuthenticated)
+                if (HttpContext.User?.IsInRole(Roles.Administrator) != true)
                 {
-                    if (!currentUser.IsInRole("ADMINISTRATOR"))
-                    {
-                        return Forbid("Only admins can create new admin accounts.");
-                    }
+                    return Forbid();
                 }
                 else
                 {
-                    return Unauthorized("You must be authorized to create an admin account.");
+                    return Unauthorized();
                 }
             }
 
-            var user = new User
-            {
-                UserName = signUpDTO.Email,
-                Email = signUpDTO.Email,
-                FirstName = signUpDTO.FirstName,
-                LastName = signUpDTO.LastName,
-                DateOfBirth = signUpDTO.DateOfBirth,
-                PhoneNumber = signUpDTO.PhoneNumber,
-                CreatedAt = DateTime.UtcNow
-            };
+            var user = _mapper.Map<User>(signUpDTO);
 
             var result = await _userManager.CreateAsync(user, signUpDTO.Password);
 
@@ -115,7 +104,7 @@ namespace Presentation.Controllers
         }
 
         [HttpPut("unlockUser")]
-        [Authorize(Roles = Roles.ADMINISTRATOR)]
+        [Authorize(Roles = Roles.Administrator)]
         public async Task<IActionResult> UnlockUser([FromBody] string userToUnlock)
         {
             var user = await _userManager.FindByNameAsync(userToUnlock);
@@ -160,7 +149,7 @@ namespace Presentation.Controllers
         {
             claims.Add(new Claim(ClaimTypes.Name, user.UserName));
 
-            var envKey = Environment.GetEnvironmentVariable("ISSUER_KEY");
+            var envKey = Environment.GetEnvironmentVariable("API_KEY");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(envKey));
             var exp = 7200;
 

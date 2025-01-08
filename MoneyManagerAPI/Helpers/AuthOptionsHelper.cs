@@ -15,9 +15,9 @@ namespace MoneyManagerAPI.Helpers
             return Environment.GetEnvironmentVariable("AUDIENCE") ?? "MoneyTrackerHost";
         }
 
-        public static string GetSymmetricSecurityKey()
+        public static string GetSecretKey()
         {
-            return Environment.GetEnvironmentVariable("ISSUER_KEY") ?? "sjgienghs;vcsfrtuifs1)d56fdsaw67";
+            return Environment.GetEnvironmentVariable("API_KEY") ?? "sjgienghs;vcsfrtuifs1)d56fdsaw67";
         }
     }
 }

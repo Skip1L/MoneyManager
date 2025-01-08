@@ -10,7 +10,7 @@ namespace Domain.Helpers
     {
         public static bool IsDateOfBirthValid(DateTime dateOfBirth)
         {
-            return dateOfBirth <= DateTime.Today;
+            return dateOfBirth <= DateTime.UtcNow;
         }
     }
 }

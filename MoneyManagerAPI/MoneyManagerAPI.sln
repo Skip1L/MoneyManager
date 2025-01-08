@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Presentation", "..\Presenta
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DTOs", "..\DTOs\DTOs.csproj", "{88D61CC9-9C53-44A3-BF98-E53A35686EAF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoneyManagerAPI.UnitTests", "..\MoneyManagerAPI.UnitTests\MoneyManagerAPI.UnitTests.csproj", "{5742079C-E2B1-4163-AF92-91C69679587D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{88D61CC9-9C53-44A3-BF98-E53A35686EAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{88D61CC9-9C53-44A3-BF98-E53A35686EAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{88D61CC9-9C53-44A3-BF98-E53A35686EAF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5742079C-E2B1-4163-AF92-91C69679587D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5742079C-E2B1-4163-AF92-91C69679587D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5742079C-E2B1-4163-AF92-91C69679587D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5742079C-E2B1-4163-AF92-91C69679587D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

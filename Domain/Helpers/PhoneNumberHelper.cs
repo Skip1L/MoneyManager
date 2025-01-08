@@ -6,7 +6,8 @@ namespace Domain.Helpers
     {
         public static bool IsPhoneNumberValid(string phoneNumber)
         {
-            string pattern = @"(?:([+]\d{1,4})[-.\s]?)?(?:[(](\d{1,3})[)][-.\s]?)?(\d{1,4})[-.\s]?(\d{1,4})[-.\s]?(\d{1,9})";
+            if (string.IsNullOrEmpty(phoneNumber)) return false;
+            string pattern = @"^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,7}$";
             Regex regex = new(pattern, RegexOptions.Compiled);
             return regex.IsMatch(phoneNumber);
         }

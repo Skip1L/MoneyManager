@@ -10,6 +10,7 @@ using Microsoft.OpenApi.Models;
 using MoneyManagerAPI.Helpers;
 using MoneyManagerAPI.Middlewares;
 using Serilog;
+using Services.Mapping;
 using Services.RepositoryInterfaces;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +24,8 @@ builder.Services.AddDbContext<ApplicationContext>(options =>
 });
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile));
 
 builder.Services.AddControllers();
 
@@ -87,7 +90,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = AuthOptionsHelper.GetIssuer(),
         ValidAudience = AuthOptionsHelper.GetAudience(),
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(AuthOptionsHelper.GetSymmetricSecurityKey())),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(AuthOptionsHelper.GetSecretKey())),
         RequireExpirationTime = true
     };
 });

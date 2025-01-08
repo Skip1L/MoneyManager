@@ -38,7 +38,7 @@ namespace MoneyManagerAPI.Helpers
             };
 
             await personManager.CreateAsync(admin, adminPassword);
-            await personManager.AddToRoleAsync(admin, Roles.ADMINISTRATOR);
+            await personManager.AddToRoleAsync(admin, Roles.Administrator);
         }
 
         private static async Task InitializeDbForRoles(this IApplicationBuilder app)
