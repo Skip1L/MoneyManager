@@ -19,13 +19,14 @@
 
         public static int GetTokenExpirationTime()
         {
-            int result = 7200;
-            if (int.TryParse(Environment.GetEnvironmentVariable("TOKEN_EXPIRATION_TIME"), out int myNumber))
+            var stringValue = Environment.GetEnvironmentVariable("TOKEN_EXPIRATION_TIME") ?? "7200";
+
+            if (int.TryParse(stringValue, out var myNumber))
             {
-                result = myNumber;
+                return myNumber;
             }
 
-            return result;
+            return 7200;
         }
     }
 }
