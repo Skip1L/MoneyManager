@@ -1,6 +1,6 @@
 ﻿using Domain.Enums;
 
-namespace DTOs.CommonDTOs
+namespace DTOs.CategoryDTOs
 {
     public class UpdateCategoryDTO
     {
