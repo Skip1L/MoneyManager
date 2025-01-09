@@ -48,7 +48,6 @@ namespace Services.Services
             }
 
             _mapper.Map(categoryDto, dbEntity);
-            dbEntity.LastUpdatedAt = DateTime.UtcNow;
 
             _categoryRepository.Update(dbEntity);
             await _categoryRepository.SaveChangesAsync();
