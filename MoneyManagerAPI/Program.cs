@@ -11,8 +11,10 @@ using Microsoft.OpenApi.Models;
 using MoneyManagerAPI.Helpers;
 using MoneyManagerAPI.Middlewares;
 using Serilog;
+using Services.Interfaces;
 using Services.Mapping;
 using Services.RepositoryInterfaces;
+using Services.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = Environment.GetEnvironmentVariable("MoneyManagerDBConnectionString") 
@@ -25,8 +27,9 @@ builder.Services.AddDbContext<ApplicationContext>(options =>
 });
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
-builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile));
+builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile), typeof(CategoryMapperProfile));
 
 builder.Services.AddControllers();
 

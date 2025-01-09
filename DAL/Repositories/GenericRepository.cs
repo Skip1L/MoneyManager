@@ -55,6 +55,22 @@ namespace DAL.Repositories
             return await query.AsNoTracking().ToListAsync(cancellationToken);
         }
 
+        public async Task<List<TEntity>> GetPagedAsync(int pageSize, int pageNumber, Expression<Func<TEntity, bool>> filter = null, CancellationToken cancellationToken = default)
+        {
+            IQueryable<TEntity> query = _repositoryContext.Set<TEntity>();
+
+            if (filter != null)
+            {
+                query = query.Where(filter);
+            }
+
+            return await query
+                .Skip(pageNumber * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             return await _repositoryContext.SaveChangesAsync(cancellationToken);

@@ -13,11 +13,13 @@ namespace DAL.EntityConfigurations
 
             builder.HasMany(c => c.Expenses)
                .WithOne(c => c.Category)
-               .HasForeignKey(i => i.CategoryId);
+               .HasForeignKey(i => i.CategoryId)
+               .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasMany(c => c.Incomes)
                .WithOne(c => c.Category)
-               .HasForeignKey(i => i.CategoryId);
+               .HasForeignKey(i => i.CategoryId)
+               .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
