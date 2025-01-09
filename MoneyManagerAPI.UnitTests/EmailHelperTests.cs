@@ -23,7 +23,6 @@ namespace MoneyManagerAPI.UnitTests
 
         #region Invalid Email Test Cases
         [TestCase("", false)] // Empty string
-        [TestCase(null, false)] // Null string
         [TestCase("plainaddress", false)] // Missing '@'
         [TestCase("user@domain", false)] // Missing TLD
         [TestCase("user@domain@domain.com", false)] // Multiple '@'

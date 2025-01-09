@@ -46,7 +46,5 @@ namespace MoneyManagerAPI.UnitTests
             Assert.That(result, Is.EqualTo(expectedResult));
         }
         #endregion
-
-
     }
 }
