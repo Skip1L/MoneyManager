@@ -11,10 +11,12 @@ namespace Domain.Helpers
                 return false;
             }
 
-            var existedRoles = typeof(Roles).GetFields()
+            var existedRoles = typeof(Roles)
+                .GetFields()
                 .Select(field => field.GetValue(null)?.ToString())
                 .Where(roleName => !string.IsNullOrEmpty(roleName))
                 .ToList();
+
             return roles.All(existedRoles.Contains);
         }
     }
