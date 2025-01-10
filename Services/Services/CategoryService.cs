@@ -12,7 +12,7 @@ namespace Services.Services
         private readonly IGenericRepository<Category> _categoryRepository = categoryRepository;
         private readonly IMapper _mapper = mapper;
 
-        public async Task CreateCategoryAsync(CreateCategoryDTO categoryDTO)
+        public async Task CreateCategoryAsync(CreateCategoryDTO categoryDTO, CancellationToken cancellationToken)
         {
             var category = _mapper.Map<Category>(categoryDTO);
 
@@ -20,25 +20,25 @@ namespace Services.Services
             await _categoryRepository.SaveChangesAsync();
         }
 
-        public async Task DeleteCategoryAsync(Guid categoryId)
+        public async Task DeleteCategoryAsync(Guid categoryId, CancellationToken cancellationToken)
         {
             await _categoryRepository.DeleteAsync(categoryId);
             await _categoryRepository.SaveChangesAsync();
         }
 
-        public async Task<List<ShortCategoryDTO>> FilterCategoryAsync(PagginationDTO paginationDto)
+        public async Task<List<ShortCategoryDTO>> FilterCategoryAsync(PagginationDTO paginationDto, CancellationToken cancellationToken)
         {
             var categoryPage = await _categoryRepository.GetPagedAsync(paginationDto.PageSize, paginationDto.PageNumber, category => category.Name.Contains(paginationDto.SearchString));
             return _mapper.Map<List<ShortCategoryDTO>>(categoryPage);
         }
 
-        public async Task<CategoryDTO> GetCategoryByIdAsync(Guid categoryId)
+        public async Task<CategoryDTO> GetCategoryByIdAsync(Guid categoryId, CancellationToken cancellationToken)
         {
             var dbEntity = await _categoryRepository.FirstOrDefaultAsync(category => category.Id == categoryId);
             return _mapper.Map<CategoryDTO>(dbEntity);
         }
 
-        public async Task UpdateCategoryAsync(UpdateCategoryDTO categoryDto)
+        public async Task UpdateCategoryAsync(UpdateCategoryDTO categoryDto, CancellationToken cancellationToken)
         {
             var dbEntity = await _categoryRepository.FirstOrDefaultAsync(category => category.Id == categoryDto.Id);
 

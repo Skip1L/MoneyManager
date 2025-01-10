@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Domain.Entities;
 using DTOs.CategoryDTOs;
-using DTOs.CommonDTOs;
 
 namespace Services.Mapping
 {
