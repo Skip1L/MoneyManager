@@ -11,7 +11,7 @@ namespace Services.RepositoryInterfaces
         void Update(TEntity entity);
         void Delete(TEntity entity);
         Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
-        Task CreateAsync(TEntity entity);
+        Task CreateAsync(TEntity entity, CancellationToken cancellationToken = default);
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

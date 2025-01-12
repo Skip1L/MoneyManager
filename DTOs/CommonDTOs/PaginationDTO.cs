@@ -1,6 +1,6 @@
 ﻿namespace DTOs.CommonDTOs
 {
-    public class PagginationDTO
+    public class PaginationDTO
     {
         public string SearchString { get; set; }
         public int PageSize { get; set; }

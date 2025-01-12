@@ -40,7 +40,7 @@ namespace Presentation.Controllers
 
         [HttpPost("filter")]
         [Authorize]
-        public async Task<IActionResult> FilterCategory([FromBody] PagginationDTO paginationDto, CancellationToken cancellationToken)
+        public async Task<IActionResult> FilterCategory([FromBody] PaginationDTO paginationDto, CancellationToken cancellationToken)
         {
             var result = await _categoryService.FilterCategoryAsync(paginationDto, cancellationToken);
             return Ok(result);
