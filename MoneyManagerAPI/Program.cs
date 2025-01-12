@@ -28,6 +28,7 @@ builder.Services.AddDbContext<ApplicationContext>(options =>
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IBudgetService, BudgetService>();
 
 builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile), typeof(CategoryMapperProfile));
 
