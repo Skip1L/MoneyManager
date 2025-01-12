@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿using Domain.Constants;
+using Domain.Entities;
 using DTOs.BudgetDTOs;
 using DTOs.CommonDTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +18,7 @@ namespace Presentation.Controllers
         private readonly UserManager<User> _userManager = userManager;
 
         [HttpPost]
+        [Authorize(Roles = Roles.DefaultUser)]
         public async Task<IActionResult> CreateBudget([FromBody] CreateBudgetDTO budgetDTO, CancellationToken cancellationToken)
         {
             var user = await _userManager.FindByNameAsync(HttpContext.User.Identity!.Name!);
@@ -26,13 +28,15 @@ namespace Presentation.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateBudget([FromBody] BudgetDTO budgetDTO, CancellationToken cancellationToken)
+        [Authorize(Roles = Roles.DefaultUser)]
+        public async Task<IActionResult> UpdateBudget([FromBody] UpdateBudgetDTO budgetDTO, CancellationToken cancellationToken)
         {
             await _budgetService.UpdateBudgetAsync(budgetDTO, cancellationToken);
             return Ok();
         }
 
         [HttpDelete("{budgetId}")]
+        [Authorize(Roles = Roles.DefaultUser)]
         public async Task<IActionResult> DeleteBudget([FromRoute] Guid budgetId, CancellationToken cancellationToken)
         {
             await _budgetService.DeleteBudgetAsync(budgetId, cancellationToken);
@@ -40,13 +44,15 @@ namespace Presentation.Controllers
         }
 
         [HttpPost("filter")]
-        public async Task<IActionResult> FilterBudget([FromBody] PagginationDTO paginationDto, CancellationToken cancellationToken)
+        [Authorize(Roles = Roles.DefaultUser)]
+        public async Task<IActionResult> FilterBudget([FromBody] PaginationDTO paginationDto, CancellationToken cancellationToken)
         {
             var result = await _budgetService.FilterBudgetAsync(paginationDto, cancellationToken);
             return Ok(result);
         }
 
         [HttpGet("{budgetId}")]
+        [Authorize(Roles = Roles.DefaultUser)]
         public async Task<IActionResult> GetBudgetById([FromRoute] Guid budgetId, CancellationToken cancellationToken)
         {
             var result = await _budgetService.GetBudgetByIdAsync(budgetId, cancellationToken);

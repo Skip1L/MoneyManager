@@ -11,10 +11,11 @@ namespace Services.Mapping
             CreateMap<CreateBudgetDTO, Budget>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));
             
-            CreateMap<BudgetDTO, Budget>()
+            CreateMap<UpdateBudgetDTO, Budget>()
                 .ForMember(dest => dest.LastUpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));
 
             CreateMap<Budget, BudgetDTO>();
+
             CreateMap<Budget, ShortBudgetDTO>();
         }
 
