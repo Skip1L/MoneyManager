@@ -10,9 +10,9 @@ namespace DAL.Repositories
     {
         protected readonly ApplicationContext _repositoryContext = repositoryContext;
 
-        public async Task CreateAsync(TEntity entity)
+        public async Task CreateAsync(TEntity entity, CancellationToken cancellationToken = default)
         {
-            await _repositoryContext.Set<TEntity>().AddAsync(entity);
+            await _repositoryContext.Set<TEntity>().AddAsync(entity, cancellationToken);
         }
 
         public void Delete(TEntity entity)

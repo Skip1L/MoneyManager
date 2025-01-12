@@ -16,31 +16,31 @@ namespace Services.Services
         {
             var category = _mapper.Map<Category>(categoryDTO);
 
-            await _categoryRepository.CreateAsync(category);
-            await _categoryRepository.SaveChangesAsync();
+            await _categoryRepository.CreateAsync(category, cancellationToken);
+            await _categoryRepository.SaveChangesAsync(cancellationToken);
         }
 
         public async Task DeleteCategoryAsync(Guid categoryId, CancellationToken cancellationToken)
         {
-            await _categoryRepository.DeleteAsync(categoryId);
-            await _categoryRepository.SaveChangesAsync();
+            await _categoryRepository.DeleteAsync(categoryId, cancellationToken);
+            await _categoryRepository.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<List<ShortCategoryDTO>> FilterCategoryAsync(PagginationDTO paginationDto, CancellationToken cancellationToken)
+        public async Task<List<ShortCategoryDTO>> FilterCategoryAsync(PaginationDTO paginationDto, CancellationToken cancellationToken)
         {
-            var categoryPage = await _categoryRepository.GetPagedAsync(paginationDto.PageSize, paginationDto.PageNumber, category => category.Name.Contains(paginationDto.SearchString));
+            var categoryPage = await _categoryRepository.GetPagedAsync(paginationDto.PageSize, paginationDto.PageNumber, category => category.Name.Contains(paginationDto.SearchString), cancellationToken);
             return _mapper.Map<List<ShortCategoryDTO>>(categoryPage);
         }
 
         public async Task<CategoryDTO> GetCategoryByIdAsync(Guid categoryId, CancellationToken cancellationToken)
         {
-            var dbEntity = await _categoryRepository.FirstOrDefaultAsync(category => category.Id == categoryId);
+            var dbEntity = await _categoryRepository.FirstOrDefaultAsync(category => category.Id == categoryId, cancellationToken);
             return _mapper.Map<CategoryDTO>(dbEntity);
         }
 
         public async Task UpdateCategoryAsync(UpdateCategoryDTO categoryDto, CancellationToken cancellationToken)
         {
-            var dbEntity = await _categoryRepository.FirstOrDefaultAsync(category => category.Id == categoryDto.Id);
+            var dbEntity = await _categoryRepository.FirstOrDefaultAsync(category => category.Id == categoryDto.Id, cancellationToken);
 
             if (dbEntity == null)
             {
@@ -50,7 +50,7 @@ namespace Services.Services
             _mapper.Map(categoryDto, dbEntity);
 
             _categoryRepository.Update(dbEntity);
-            await _categoryRepository.SaveChangesAsync();
+            await _categoryRepository.SaveChangesAsync(cancellationToken);
         }
     }
 }
