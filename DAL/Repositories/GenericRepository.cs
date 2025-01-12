@@ -10,9 +10,9 @@ namespace DAL.Repositories
     {
         protected readonly ApplicationContext _repositoryContext = repositoryContext;
 
-        public async Task CreateAsync(TEntity entity)
+        public async Task CreateAsync(TEntity entity, CancellationToken cancellationToken = default)
         {
-            await _repositoryContext.Set<TEntity>().AddAsync(entity);
+            await _repositoryContext.Set<TEntity>().AddAsync(entity, cancellationToken);
         }
 
         public void Delete(TEntity entity)
@@ -53,6 +53,22 @@ namespace DAL.Repositories
             }
 
             return await query.AsNoTracking().ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<TEntity>> GetPagedAsync(int pageSize, int pageNumber, Expression<Func<TEntity, bool>> filter = null, CancellationToken cancellationToken = default)
+        {
+            IQueryable<TEntity> query = _repositoryContext.Set<TEntity>();
+
+            if (filter != null)
+            {
+                query = query.Where(filter);
+            }
+
+            return await query
+                .Skip(pageNumber * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
         }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
