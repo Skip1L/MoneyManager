@@ -22,7 +22,6 @@ namespace Presentation.Controllers
         public async Task<IActionResult> CreateBudget([FromBody] CreateBudgetDTO budgetDTO, CancellationToken cancellationToken)
         {
             var user = await _userManager.FindByNameAsync(HttpContext.User.Identity!.Name!);
-            
             await _budgetService.CreateBudgetAsync(budgetDTO, user!.Id, cancellationToken);
             return Ok();
         }
