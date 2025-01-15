@@ -30,8 +30,9 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddScoped<IBudgetRepository, BudgetRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
 
-builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile), typeof(CategoryMapperProfile));
+builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile), typeof(CategoryMapperProfile), typeof(TransactionMapperProfile));
 
 builder.Services.AddControllers();
 
