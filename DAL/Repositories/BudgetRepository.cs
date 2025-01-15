@@ -1,6 +1,4 @@
 ﻿using Domain.Entities;
-using Domain.Enums;
-using DTOs.TransactionDTOs;
 using Microsoft.EntityFrameworkCore;
 using Services.RepositoryInterfaces;
 

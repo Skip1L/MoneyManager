@@ -1,5 +1,4 @@
 ﻿using Domain.Entities;
-using DTOs.TransactionDTOs;
 
 namespace Services.RepositoryInterfaces
 {
