@@ -1,5 +1,4 @@
 ﻿using System.Data;
-using System.Net;
 using Domain.Constants;
 using Domain.Entities;
 using Microsoft.AspNetCore.Identity;

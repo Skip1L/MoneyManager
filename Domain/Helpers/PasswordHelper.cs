@@ -4,7 +4,7 @@ namespace Domain.Helpers
 {
     public static class PasswordHelper
     {
-        private const string _validPasswordPattern= @"^(?=.*?[A-Z])(?=(.*[a-z]))(?=(.*[\d]))(?=(.*[^a-zA-Z0-9])).{8,}$";
+        private const string _validPasswordPattern = @"^(?=.*?[A-Z])(?=(.*[a-z]))(?=(.*[\d]))(?=(.*[^a-zA-Z0-9])).{8,}$";
 
         public static bool IsPasswordValid(string password)
         {

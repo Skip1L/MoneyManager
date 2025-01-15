@@ -76,7 +76,7 @@ namespace Presentation.Controllers
                 return Conflict();
             }
 
-            if (signUpDTO.Roles.Contains(Roles.Administrator) 
+            if (signUpDTO.Roles.Contains(Roles.Administrator)
                 && HttpContext.User?.IsInRole(Roles.Administrator) != true)
             {
                 return Forbid();
@@ -137,7 +137,7 @@ namespace Presentation.Controllers
         {
             claims.Add(new Claim(ClaimTypes.Name, user.UserName));
 
-            var envKey =  AuthOptionsHelper.GetSecretKey();
+            var envKey = AuthOptionsHelper.GetSecretKey();
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(envKey));
             var exp = AuthOptionsHelper.GetTokenExpirationTime();
 

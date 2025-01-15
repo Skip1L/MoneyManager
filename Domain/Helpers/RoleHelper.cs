@@ -6,7 +6,7 @@ namespace Domain.Helpers
     {
         public static bool IsRolesValid(List<string> roles)
         {
-            if(roles.Count == 0)
+            if (roles.Count == 0)
             {
                 return false;
             }
