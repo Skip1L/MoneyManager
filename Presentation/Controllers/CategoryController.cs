@@ -1,4 +1,5 @@
 ﻿using Domain.Constants;
+using Domain.Enums;
 using DTOs.CategoryDTOs;
 using DTOs.CommonDTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -40,9 +41,9 @@ namespace Presentation.Controllers
 
         [HttpPost("filter")]
         [Authorize]
-        public async Task<IActionResult> FilterCategory([FromBody] PaginationDTO paginationDto, CancellationToken cancellationToken)
+        public async Task<IActionResult> FilterCategory([FromBody] PaginationDTO paginationDto, [FromQuery] CategoryType? categoryType, CancellationToken cancellationToken)
         {
-            var result = await _categoryService.FilterCategoryAsync(paginationDto, cancellationToken);
+            var result = await _categoryService.FilterCategoryAsync(paginationDto, categoryType, cancellationToken);
             return Ok(result);
         }
 
