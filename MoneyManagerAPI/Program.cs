@@ -17,8 +17,8 @@ using Services.RepositoryInterfaces;
 using Services.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = Environment.GetEnvironmentVariable("MoneyManagerDBConnectionString") 
-    ?? builder.Configuration.GetConnectionString("MoneyManagerDBConnectionString") 
+var connectionString = Environment.GetEnvironmentVariable("MoneyManagerDBConnectionString")
+    ?? builder.Configuration.GetConnectionString("MoneyManagerDBConnectionString")
     ?? "Server=(localdb)\\MSSQLLocalDB;Database=MoneyManagerDB;Trusted_Connection=True;";
 
 builder.Services.AddDbContext<ApplicationContext>(options =>
@@ -27,6 +27,7 @@ builder.Services.AddDbContext<ApplicationContext>(options =>
 });
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IBudgetRepository, BudgetRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 

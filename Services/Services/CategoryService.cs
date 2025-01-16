@@ -1,15 +1,18 @@
 ﻿using AutoMapper;
 using Domain.Entities;
+using Domain.Enums;
 using DTOs.CategoryDTOs;
 using DTOs.CommonDTOs;
+using Microsoft.Extensions.Logging;
 using Services.Interfaces;
 using Services.RepositoryInterfaces;
 
 namespace Services.Services
 {
-    public class CategoryService(IGenericRepository<Category> categoryRepository, IMapper mapper) : ICategoryService
+    public class CategoryService(IGenericRepository<Category> categoryRepository, ILogger<BudgetService> logger, IMapper mapper) : ICategoryService
     {
         private readonly IGenericRepository<Category> _categoryRepository = categoryRepository;
+        private readonly ILogger<BudgetService> _logger = logger;
         private readonly IMapper _mapper = mapper;
 
         public async Task CreateCategoryAsync(CreateCategoryDTO categoryDTO, CancellationToken cancellationToken)
@@ -26,9 +29,15 @@ namespace Services.Services
             await _categoryRepository.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<List<ShortCategoryDTO>> FilterCategoryAsync(PaginationDTO paginationDto, CancellationToken cancellationToken)
+        public async Task<List<ShortCategoryDTO>> FilterCategoryAsync(PaginationDTO paginationDto, CategoryType? categoryType, CancellationToken cancellationToken)
         {
-            var categoryPage = await _categoryRepository.GetPagedAsync(paginationDto.PageSize, paginationDto.PageNumber, category => category.Name.Contains(paginationDto.SearchString), cancellationToken);
+            var categoryPage = await _categoryRepository.GetPagedAsync(
+                paginationDto.PageSize,
+                paginationDto.PageNumber,
+                category => (string.IsNullOrWhiteSpace(paginationDto.SearchString) || category.Name.Contains(paginationDto.SearchString))
+                    && (categoryType == null || category.CategoryType == categoryType),
+                cancellationToken);
+
             return _mapper.Map<List<ShortCategoryDTO>>(categoryPage);
         }
 
@@ -44,6 +53,7 @@ namespace Services.Services
 
             if (dbEntity == null)
             {
+                _logger.LogError($"Category is not found. categoryId: {categoryDto.Id}; categoryType: {categoryDto.CategoryType}");
                 return;
             }
 

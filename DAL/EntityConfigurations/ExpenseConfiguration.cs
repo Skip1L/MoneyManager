@@ -16,8 +16,8 @@ namespace DAL.EntityConfigurations
                 .HasForeignKey(i => i.CategoryId);
 
             builder.HasOne(e => e.Budget)
-                .WithMany(b =>  b.Expenses)
-                .HasForeignKey(e =>  e.BudgetId);
+                .WithMany(b => b.Expenses)
+                .HasForeignKey(e => e.BudgetId);
         }
 
     }

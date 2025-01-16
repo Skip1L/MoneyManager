@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace DTOs.AuthorizationDTOs
+﻿namespace DTOs.AuthorizationDTOs
 {
     public class SignUpDTO
     {

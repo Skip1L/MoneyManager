@@ -22,7 +22,7 @@ namespace Presentation.Controllers
         public async Task<IActionResult> CreateBudget([FromBody] CreateBudgetDTO budgetDTO, CancellationToken cancellationToken)
         {
             var user = await _userManager.FindByNameAsync(HttpContext.User.Identity!.Name!);
-            await _budgetService.CreateBudgetAsync(budgetDTO, user!.Id, cancellationToken);
+            await _budgetService.CreateBudgetAsync(budgetDTO, user.Id, cancellationToken);
             return Ok();
         }
 
@@ -30,7 +30,8 @@ namespace Presentation.Controllers
         [Authorize(Roles = Roles.DefaultUser)]
         public async Task<IActionResult> UpdateBudget([FromBody] UpdateBudgetDTO budgetDTO, CancellationToken cancellationToken)
         {
-            await _budgetService.UpdateBudgetAsync(budgetDTO, cancellationToken);
+            var user = await _userManager.FindByNameAsync(HttpContext.User.Identity!.Name!);
+            await _budgetService.UpdateBudgetAsync(budgetDTO, user.Id, cancellationToken);
             return Ok();
         }
 
@@ -38,7 +39,8 @@ namespace Presentation.Controllers
         [Authorize(Roles = Roles.DefaultUser)]
         public async Task<IActionResult> DeleteBudget([FromRoute] Guid budgetId, CancellationToken cancellationToken)
         {
-            await _budgetService.DeleteBudgetAsync(budgetId, cancellationToken);
+            var user = await _userManager.FindByNameAsync(HttpContext.User.Identity!.Name!);
+            await _budgetService.DeleteBudgetAsync(budgetId, user.Id, cancellationToken);
             return Ok();
         }
 
@@ -46,7 +48,8 @@ namespace Presentation.Controllers
         [Authorize(Roles = Roles.DefaultUser)]
         public async Task<IActionResult> FilterBudget([FromBody] PaginationDTO paginationDto, CancellationToken cancellationToken)
         {
-            var result = await _budgetService.FilterBudgetAsync(paginationDto, cancellationToken);
+            var user = await _userManager.FindByNameAsync(HttpContext.User.Identity!.Name!);
+            var result = await _budgetService.FilterBudgetAsync(paginationDto, user.Id, cancellationToken);
             return Ok(result);
         }
 
@@ -54,7 +57,7 @@ namespace Presentation.Controllers
         [Authorize(Roles = Roles.DefaultUser)]
         public async Task<IActionResult> GetBudgetById([FromRoute] Guid budgetId, CancellationToken cancellationToken)
         {
-            var result = await _budgetService.GetBudgetByIdAsync(budgetId, cancellationToken);
+            var result = await _budgetService.GetBudgetByIdAsync(budgetId, HttpContext.User.Identity.Name, cancellationToken);
             return Ok(result);
         }
     }
