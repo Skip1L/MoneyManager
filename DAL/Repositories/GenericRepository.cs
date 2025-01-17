@@ -1,7 +1,7 @@
-﻿using System.Linq.Expressions;
-using Domain.Entities;
+﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Services.RepositoryInterfaces;
+using System.Linq.Expressions;
 
 namespace DAL.Repositories
 {
@@ -27,8 +27,7 @@ namespace DAL.Repositories
 
         public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            TEntity entityToDelete = await _repositoryContext.Set<TEntity>().FindAsync(id, cancellationToken);
-            Delete(entityToDelete);
+            await _repositoryContext.Set<TEntity>().Where(e => e.Id == id).ExecuteDeleteAsync();
         }
 
         public async Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter = null, CancellationToken cancellationToken = default)

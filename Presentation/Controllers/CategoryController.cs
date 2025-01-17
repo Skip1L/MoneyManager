@@ -41,9 +41,9 @@ namespace Presentation.Controllers
 
         [HttpPost("filter")]
         [Authorize]
-        public async Task<IActionResult> FilterCategory([FromBody] PaginationDTO paginationDto, [FromQuery] CategoryType? categoryType, CancellationToken cancellationToken)
+        public async Task<IActionResult> FilterCategory([FromBody] DataFilter dataFilter, [FromQuery] CategoryType? categoryType, CancellationToken cancellationToken)
         {
-            var result = await _categoryService.FilterCategoryAsync(paginationDto, categoryType, cancellationToken);
+            var result = await _categoryService.FilterCategoryAsync(dataFilter, categoryType, cancellationToken);
             return Ok(result);
         }
 

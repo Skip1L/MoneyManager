@@ -25,7 +25,7 @@ namespace Services.Services
 
         public async Task DeleteBudgetAsync(Guid budgetId, Guid userId, CancellationToken cancellationToken)
         {
-            var budget = await _budgetRepository.FirstOrDefaultAsync(budget => budget.Id == budgetId && budget.UserId == userId);
+            var budget = await _budgetRepository.FirstOrDefaultAsync(budget => budget.Id == budgetId && budget.UserId == userId, cancellationToken);
 
             if (budget == null)
             {
@@ -33,17 +33,22 @@ namespace Services.Services
                 return;
             }
 
-            _budgetRepository.Delete(budget);
-            await _budgetRepository.SaveChangesAsync(cancellationToken);
+            await _budgetRepository.DeleteAsync(budget.Id, cancellationToken);
         }
 
-        public async Task<List<ShortBudgetDTO>> FilterBudgetAsync(PaginationDTO paginationDto, Guid userId, CancellationToken cancellationToken)
+        public async Task<List<ShortBudgetDTO>> FilterBudgetAsync(DataFilter dataFilter, Guid userId, CancellationToken cancellationToken)
         {
+            if (dataFilter?.PaginationFilter is null || dataFilter.SearchFilter is null)
+            {
+                _logger.LogError("Filter is empty");
+                throw new ArgumentNullException("dataFilter is empty");
+            }
+
             var dbEntity = await _budgetRepository.GetPagedAsync(
-                paginationDto.PageSize,
-                paginationDto.PageNumber,
+                dataFilter.PaginationFilter.PageSize,
+                dataFilter.PaginationFilter.PageNumber,
                 budget => budget.UserId == userId
-                    && (string.IsNullOrWhiteSpace(paginationDto.SearchString) || budget.Name.Contains(paginationDto.SearchString)),
+                    && (string.IsNullOrWhiteSpace(dataFilter.SearchFilter.SearchString) || budget.Name.Contains(dataFilter.SearchFilter.SearchString)),
                 cancellationToken);
 
             return _mapper.Map<List<ShortBudgetDTO>>(dbEntity);

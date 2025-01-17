@@ -8,7 +8,7 @@ namespace Services.Interfaces
         Task CreateBudgetAsync(CreateBudgetDTO BudgetDTO, Guid userId, CancellationToken cancellationToken);
         Task UpdateBudgetAsync(UpdateBudgetDTO BudgetDTO, Guid userId, CancellationToken cancellationToken);
         Task DeleteBudgetAsync(Guid BudgetId, Guid userId, CancellationToken cancellationToken);
-        Task<List<ShortBudgetDTO>> FilterBudgetAsync(PaginationDTO paginationDto, Guid userId, CancellationToken cancellationToken);
+        Task<List<ShortBudgetDTO>> FilterBudgetAsync(DataFilter dataFilter, Guid userId, CancellationToken cancellationToken);
         Task<BudgetDTO> GetBudgetByIdAsync(Guid BudgetId, string userName, CancellationToken cancellationToken);
     }
 }

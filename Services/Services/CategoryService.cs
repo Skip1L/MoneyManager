@@ -26,15 +26,20 @@ namespace Services.Services
         public async Task DeleteCategoryAsync(Guid categoryId, CancellationToken cancellationToken)
         {
             await _categoryRepository.DeleteAsync(categoryId, cancellationToken);
-            await _categoryRepository.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<List<ShortCategoryDTO>> FilterCategoryAsync(PaginationDTO paginationDto, CategoryType? categoryType, CancellationToken cancellationToken)
+        public async Task<List<ShortCategoryDTO>> FilterCategoryAsync(DataFilter dataFilter, CategoryType? categoryType, CancellationToken cancellationToken)
         {
+            if (dataFilter?.PaginationFilter is null || dataFilter.SearchFilter is null)
+            {
+                _logger.LogError("Filter is empty");
+                throw new ArgumentNullException("dataFilter is empty");
+            }
+
             var categoryPage = await _categoryRepository.GetPagedAsync(
-                paginationDto.PageSize,
-                paginationDto.PageNumber,
-                category => (string.IsNullOrWhiteSpace(paginationDto.SearchString) || category.Name.Contains(paginationDto.SearchString))
+                dataFilter.PaginationFilter.PageSize,
+                dataFilter.PaginationFilter.PageNumber,
+                category => (string.IsNullOrWhiteSpace(dataFilter.SearchFilter.SearchString) || category.Name.Contains(dataFilter.SearchFilter.SearchString))
                     && (categoryType == null || category.CategoryType == categoryType),
                 cancellationToken);
 
