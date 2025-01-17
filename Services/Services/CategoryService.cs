@@ -29,12 +29,18 @@ namespace Services.Services
             await _categoryRepository.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<List<ShortCategoryDTO>> FilterCategoryAsync(PaginationFilter paginationDto, CategoryType? categoryType, CancellationToken cancellationToken)
+        public async Task<List<ShortCategoryDTO>> FilterCategoryAsync(DataFilter dataFilter, CategoryType? categoryType, CancellationToken cancellationToken)
         {
+            if (dataFilter?.PaginationFilter is null || dataFilter.SearchFilter is null)
+            {
+                _logger.LogError("Filter is empty");
+                throw new ArgumentNullException("dataFilter is empty");
+            }
+
             var categoryPage = await _categoryRepository.GetPagedAsync(
-                paginationDto.PageSize,
-                paginationDto.PageNumber,
-                category => (string.IsNullOrWhiteSpace(paginationDto.SearchFilter.SearchString) || category.Name.Contains(paginationDto.SearchFilter.SearchString))
+                dataFilter.PaginationFilter.PageSize,
+                dataFilter.PaginationFilter.PageNumber,
+                category => (string.IsNullOrWhiteSpace(dataFilter.SearchFilter.SearchString) || category.Name.Contains(dataFilter.SearchFilter.SearchString))
                     && (categoryType == null || category.CategoryType == categoryType),
                 cancellationToken);
 

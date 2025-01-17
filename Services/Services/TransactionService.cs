@@ -52,20 +52,10 @@ namespace Services.Services
 
         public async Task UpdateTransactionAsync(UpdateTransactionDTO transactionDTO, Guid userId, CancellationToken cancellationToken)
         {
-            var updateExpenseTask = _expenseRepository.FirstOrDefaultAsync(
+            var expense = await _expenseRepository.FirstOrDefaultAsync(
                 expense => expense.Id == transactionDTO.Id && expense.Budget.UserId == userId,
                 cancellationToken
             );
-
-            var updateIncomeTask = _incomeRepository.FirstOrDefaultAsync(
-                income => income.Id == transactionDTO.Id && income.Budget.UserId == userId,
-                cancellationToken
-            );
-
-            await Task.WhenAll(updateExpenseTask, updateIncomeTask);
-
-            var expense = updateExpenseTask.Result;
-            var income = updateIncomeTask.Result;
 
             if (expense != null)
             {
@@ -74,6 +64,11 @@ namespace Services.Services
                 await _expenseRepository.SaveChangesAsync(cancellationToken);
                 return;
             }
+
+            var income = await _incomeRepository.FirstOrDefaultAsync(
+                income => income.Id == transactionDTO.Id && income.Budget.UserId == userId,
+                cancellationToken
+            );
 
             if (income != null)
             {

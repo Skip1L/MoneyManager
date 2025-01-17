@@ -2,12 +2,15 @@
 using Domain.Enums;
 using DTOs.TransactionDTOs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Services.RepositoryInterfaces;
 
 namespace DAL.Repositories
 {
-    public class BudgetRepository(ApplicationContext repositoryContext) : GenericRepository<Budget>(repositoryContext), IBudgetRepository
+    public class BudgetRepository(ApplicationContext repositoryContext, IServiceProvider serviceProvider) : GenericRepository<Budget>(repositoryContext), IBudgetRepository
     {
+        private readonly IServiceProvider _serviceProvider = serviceProvider;
+
         public async Task<Budget> GetBudgetWithUserAsync(Guid budgetId, CancellationToken cancellationToken = default)
         {
             return await _repositoryContext
@@ -106,23 +109,37 @@ namespace DAL.Repositories
                 throw new ArgumentException("Filter is empty");
             }
 
-            var budgetIds = _repositoryContext
+            using var scopeExpense = _serviceProvider.CreateScope();
+            using var scopeIncome = _serviceProvider.CreateScope();
+            var expensesContext = scopeExpense.ServiceProvider.GetRequiredService<ApplicationContext>();
+            var incomesContext = scopeIncome.ServiceProvider.GetRequiredService<ApplicationContext>();
+
+            var budgetIdsExpense = expensesContext
                 .Budgets
+                .AsNoTracking()
                 .Where(budget => budget.UserId == filter.UserId)
                 .Select(budget => budget.Id);
 
-            var expensesQuery = _repositoryContext
+            var budgetIdsIncome = incomesContext
+                .Budgets
+                .AsNoTracking()
+                .Where(budget => budget.UserId == filter.UserId)
+                .Select(budget => budget.Id);
+
+            var expensesQuery = expensesContext
                 .Expenses
-                .Where(e => budgetIds.Contains(e.BudgetId))
+                .AsNoTracking()
+                .Where(e => budgetIdsExpense.Contains(e.BudgetId))
                 .Select(e => new
                 {
                     Date = e.ExpenseDate,
                     e.Amount
                 });
 
-            var incomesQuery = _repositoryContext
+            var incomesQuery = incomesContext
                 .Incomes
-                .Where(i => budgetIds.Contains(i.BudgetId))
+                .AsNoTracking()
+                .Where(i => budgetIdsIncome.Contains(i.BudgetId))
                 .Select(e => new
                 {
                     Date = e.IncomeDate,
@@ -144,13 +161,11 @@ namespace DAL.Repositories
             var totalIncomesTask = incomesQuery.SumAsync(i => i.Amount, cancellationToken);
             var totalExpensesTask = expensesQuery.SumAsync(e => e.Amount, cancellationToken);
 
-            await Task.WhenAll(totalIncomesTask, totalExpensesTask);
-
             return new TransactionsSummaryDTO
             {
-                TotalIncomes = totalIncomesTask.Result,
-                TotalExpenses = totalExpensesTask.Result,
-                NetBalance = totalIncomesTask.Result - totalExpensesTask.Result
+                TotalIncomes = await totalIncomesTask,
+                TotalExpenses = await totalExpensesTask,
+                NetBalance = await totalIncomesTask - await totalExpensesTask
             };
         }
     }

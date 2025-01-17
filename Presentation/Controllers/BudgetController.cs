@@ -46,10 +46,10 @@ namespace Presentation.Controllers
 
         [HttpPost("filter")]
         [Authorize(Roles = Roles.DefaultUser)]
-        public async Task<IActionResult> FilterBudget([FromBody] PaginationFilter paginationDto, CancellationToken cancellationToken)
+        public async Task<IActionResult> FilterBudget([FromBody] DataFilter dataFilter, CancellationToken cancellationToken)
         {
             var user = await _userManager.FindByNameAsync(HttpContext.User.Identity!.Name!);
-            var result = await _budgetService.FilterBudgetAsync(paginationDto, user.Id, cancellationToken);
+            var result = await _budgetService.FilterBudgetAsync(dataFilter, user.Id, cancellationToken);
             return Ok(result);
         }
 

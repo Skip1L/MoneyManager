@@ -1,7 +1,7 @@
-﻿using System.Linq.Expressions;
-using Domain.Entities;
+﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Services.RepositoryInterfaces;
+using System.Linq.Expressions;
 
 namespace DAL.Repositories
 {
