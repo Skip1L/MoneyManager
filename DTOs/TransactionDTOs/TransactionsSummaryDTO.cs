@@ -4,6 +4,6 @@
     {
         public double TotalIncomes { get; set; }
         public double TotalExpenses { get; set; }
-        public double NetBalance => TotalIncomes - TotalExpenses;
+        public double NetBalance { get; set; }
     }
 }

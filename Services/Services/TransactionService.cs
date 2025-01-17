@@ -8,10 +8,10 @@ using Services.RepositoryInterfaces;
 
 namespace Services.Services
 {
-    public class TransactionService(IGenericRepository<Income> incomeRepository, IGenericRepository<Expense> expenseRepository, IBudgetRepository budgetRepository, ILogger<TransactionService> logger, IMapper mapper) : ITransactionService
+    public class TransactionService(IIncomeRepository incomeRepository, IExpenseRepository expenseRepository, IBudgetRepository budgetRepository, ILogger<TransactionService> logger, IMapper mapper) : ITransactionService
     {
-        private readonly IGenericRepository<Income> _incomeRepository = incomeRepository;
-        private readonly IGenericRepository<Expense> _expenseRepository = expenseRepository;
+        private readonly IIncomeRepository _incomeRepository = incomeRepository;
+        private readonly IExpenseRepository _expenseRepository = expenseRepository;
         private readonly IBudgetRepository _budgetRepository = budgetRepository;
         private readonly ILogger<TransactionService> _logger = logger;
         private readonly IMapper _mapper = mapper;
@@ -50,136 +50,101 @@ namespace Services.Services
             return await _budgetRepository.GetTransactionsByTransactionFilter(filter, cancellationToken);
         }
 
-        public async Task UpdateTransactionAsync(UpdateTransactionDTO transactionDTO, CancellationToken cancellationToken)
+        public async Task UpdateTransactionAsync(UpdateTransactionDTO transactionDTO, Guid userId, CancellationToken cancellationToken)
         {
-            switch (transactionDTO.CategoryType)
-            {
-                case CategoryType.Expense:
-                    await UpdateExpenseAsync(transactionDTO, cancellationToken);
-                    break;
-                case CategoryType.Income:
-                    await UpdateIncomeAsync(transactionDTO, cancellationToken);
-                    break;
-            }
-        }
+            var updateExpenseTask = _expenseRepository.FirstOrDefaultAsync(
+                expense => expense.Id == transactionDTO.Id && expense.Budget.UserId == userId,
+                cancellationToken
+            );
 
-        private async Task UpdateIncomeAsync(UpdateTransactionDTO transactionDTO, CancellationToken cancellationToken)
-        {
-            var dbEntity = await _incomeRepository.FirstOrDefaultAsync(
-                income => income.Id == transactionDTO.Id && income.Budget.UserId == transactionDTO.UserId,
-                cancellationToken);
+            var updateIncomeTask = _incomeRepository.FirstOrDefaultAsync(
+                income => income.Id == transactionDTO.Id && income.Budget.UserId == userId,
+                cancellationToken
+            );
 
-            if (dbEntity == null)
+            await Task.WhenAll(updateExpenseTask, updateIncomeTask);
+
+            var expense = updateExpenseTask.Result;
+            var income = updateIncomeTask.Result;
+
+            if (expense != null)
             {
-                _logger.LogError($"Income is not found. budgetId: {transactionDTO.Id}; userId: {transactionDTO.UserId}");
+                _mapper.Map(transactionDTO, expense);
+                _expenseRepository.Update(expense);
+                await _expenseRepository.SaveChangesAsync(cancellationToken);
                 return;
             }
 
-            _mapper.Map(transactionDTO, dbEntity);
-
-            _incomeRepository.Update(dbEntity);
-            await _incomeRepository.SaveChangesAsync(cancellationToken);
-        }
-
-        private async Task UpdateExpenseAsync(UpdateTransactionDTO transactionDTO, CancellationToken cancellationToken)
-        {
-            var dbEntity = await _expenseRepository.FirstOrDefaultAsync(
-                expense => expense.Id == transactionDTO.Id && expense.Budget.UserId == transactionDTO.UserId,
-                cancellationToken);
-
-            if (dbEntity == null)
+            if (income != null)
             {
-                _logger.LogError($"Expense is not found. budgetId: {transactionDTO.Id}; userId: {transactionDTO.UserId}");
+                _mapper.Map(transactionDTO, income);
+                _incomeRepository.Update(income);
+                await _incomeRepository.SaveChangesAsync(cancellationToken);
                 return;
             }
 
-            _mapper.Map(transactionDTO, dbEntity);
-
-            _expenseRepository.Update(dbEntity);
-            await _expenseRepository.SaveChangesAsync(cancellationToken);
+            _logger.LogError($"Transaction not found. transactionId: {transactionDTO.Id}; userId: {userId}");
         }
 
-        public async Task DeleteTransactionAsync(Guid transactionId, CategoryType categoryType, string userName, CancellationToken cancellationToken)
+        public async Task DeleteTransactionAsync(Guid transactionId, Guid userId, CancellationToken cancellationToken)
         {
-            switch (categoryType)
-            {
-                case CategoryType.Expense:
-                    await DeleteExpenseAsync(transactionId, userName, cancellationToken);
-                    break;
-                case CategoryType.Income:
-                    await DeleteIncomeAsync(transactionId, userName, cancellationToken);
-                    break;
-            }
-        }
+            var deleteExpenseTask = _expenseRepository.FirstOrDefaultAsync(
+                expense => expense.Id == transactionId && expense.Budget.UserId == userId,
+                cancellationToken
+            );
 
-        private async Task DeleteIncomeAsync(Guid transactionId, string userName, CancellationToken cancellationToken)
-        {
-            var income = await _incomeRepository.FirstOrDefaultAsync(income => income.Id == transactionId && income.Budget.User.UserName == userName, cancellationToken);
+            var deleteIncomeTask = _incomeRepository.FirstOrDefaultAsync(
+                income => income.Id == transactionId && income.Budget.UserId == userId,
+                cancellationToken
+            );
 
-            if (income == null)
+            await Task.WhenAll(deleteExpenseTask, deleteIncomeTask);
+
+            var expense = deleteExpenseTask.Result;
+            var income = deleteIncomeTask.Result;
+
+            if (expense != null)
             {
-                _logger.LogError($"Income is not found. budgetId: {transactionId}; userName: {userName}");
+                _expenseRepository.Delete(expense);
+                await _expenseRepository.SaveChangesAsync(cancellationToken);
                 return;
             }
 
-            _incomeRepository.Delete(income);
-            await _incomeRepository.SaveChangesAsync(cancellationToken);
-        }
-
-        private async Task DeleteExpenseAsync(Guid transactionId, string userName, CancellationToken cancellationToken)
-        {
-            var expense = await _expenseRepository.FirstOrDefaultAsync(expense => expense.Id == transactionId && expense.Budget.User.UserName == userName, cancellationToken);
-
-            if (expense == null)
+            if (income != null)
             {
-                _logger.LogError($"Expense is not found. budgetId: {transactionId}; userName: {userName}");
+                _incomeRepository.Delete(income);
+                await _incomeRepository.SaveChangesAsync(cancellationToken);
                 return;
             }
 
-            _expenseRepository.Delete(expense);
-            await _expenseRepository.SaveChangesAsync(cancellationToken);
+            _logger.LogError($"Transaction not found. transactionId: {transactionId}; userName: {userId}");
         }
 
-        public async Task<TransactionDTO> GetTransactionByIdAsync(Guid transactionId, CategoryType categoryType, Guid userId, CancellationToken cancellationToken)
+        public async Task<TransactionDTO> GetTransactionByIdAsync(Guid transactionId, Guid userId, CancellationToken cancellationToken)
         {
-            switch (categoryType)
-            {
-                case CategoryType.Expense:
-                    return await GetExpenseByIdAsync(transactionId, userId, cancellationToken);
-                case CategoryType.Income:
-                    return await GetIncomeByIdAsync(transactionId, userId, cancellationToken);
-                default:
-                    return new TransactionDTO();
-            }
-        }
+            var getExpenseTask = _expenseRepository.GetExpenseWithBudgetAndCategoryAsync(transactionId, cancellationToken);
+            var getIncomeTask = _incomeRepository.GetIncomeWithBudgetAndCategoryAsync(transactionId, cancellationToken);
 
-        private async Task<TransactionDTO> GetExpenseByIdAsync(Guid transactionId, Guid userId, CancellationToken cancellationToken)
-        {
-            var dbEntity = await _budgetRepository.GetExpenseWithBudgetAsync(transactionId, cancellationToken);
+            await Task.WhenAll(getExpenseTask, getIncomeTask);
 
-            if (dbEntity.Budget.UserId != userId)
+            var expense = getExpenseTask.Result;
+            var income = getIncomeTask.Result;
+
+            if (expense != null && expense.Budget.UserId == userId)
             {
-                _logger.LogError($"Expense is not found. transactionId: {transactionId}; userId: {userId}");
-                throw new Exception("Budget is not found");
+                return _mapper.Map<TransactionDTO>(expense);
             }
 
-            return _mapper.Map<TransactionDTO>(dbEntity);
-        }
-
-        private async Task<TransactionDTO> GetIncomeByIdAsync(Guid transactionId, Guid userId, CancellationToken cancellationToken)
-        {
-            var dbEntity = await _budgetRepository.GetIncomeWithBudgetAsync(transactionId, cancellationToken);
-
-            if (dbEntity.Budget.UserId != userId)
+            if (income != null && income.Budget.UserId == userId)
             {
-                _logger.LogError($"Income is not found. transactionId: {transactionId}; userId: {userId}");
-                throw new Exception("Budget is not found");
+                return _mapper.Map<TransactionDTO>(income);
             }
-
-            return _mapper.Map<TransactionDTO>(dbEntity);
+            
+            _logger.LogError($"Transaction not found. transactionId: {transactionId}; userId: {userId}");
+            throw new Exception("Transaction not found");
         }
 
-        public async Task<TransactionsSummaryDTO> GetTransactionsSummary(TransactionSummaryFilter filter, CancellationToken cancellationToken)
+        public async Task<TransactionsSummaryDTO> GetTransactionsSummary(TransactionFilter filter, CancellationToken cancellationToken)
         {
             return await _budgetRepository.GetTransactionsSummaryByDateRange(filter, cancellationToken);
         }

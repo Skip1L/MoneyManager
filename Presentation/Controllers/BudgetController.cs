@@ -46,7 +46,7 @@ namespace Presentation.Controllers
 
         [HttpPost("filter")]
         [Authorize(Roles = Roles.DefaultUser)]
-        public async Task<IActionResult> FilterBudget([FromBody] PaginationDTO paginationDto, CancellationToken cancellationToken)
+        public async Task<IActionResult> FilterBudget([FromBody] PaginationFilter paginationDto, CancellationToken cancellationToken)
         {
             var user = await _userManager.FindByNameAsync(HttpContext.User.Identity!.Name!);
             var result = await _budgetService.FilterBudgetAsync(paginationDto, user.Id, cancellationToken);

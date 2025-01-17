@@ -17,27 +17,9 @@ namespace DAL.Repositories
                 .FirstOrDefaultAsync(b => b.Id == budgetId, cancellationToken);
         }
 
-        public async Task<Income> GetIncomeWithBudgetAsync(Guid transactionId, CancellationToken cancellationToken = default)
-        {
-            return await _repositoryContext
-                .Incomes
-                .AsNoTracking()
-                .Include(b => b.Budget).Include(b => b.Category)
-                .FirstOrDefaultAsync(b => b.Id == transactionId, cancellationToken);
-        }
-
-        public async Task<Expense> GetExpenseWithBudgetAsync(Guid transactionId, CancellationToken cancellationToken = default)
-        {
-            return await _repositoryContext
-                .Expenses
-                .AsNoTracking()
-                .Include(b => b.Budget).Include(b => b.Category)
-                .FirstOrDefaultAsync(b => b.Id == transactionId, cancellationToken);
-        }
-
         public async Task<List<TransactionDTO>> GetTransactionsByTransactionFilter(TransactionFilter filter, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(filter?.UserId.ToString()))
+            if (filter is null)
             {
                 throw new ArgumentException("Filter is empty");
             }
@@ -75,27 +57,27 @@ namespace DAL.Repositories
                     CategoryName = e.Category.Name
                 });
 
-            if (filter.DateRangePaginationDTO?.From != null)
+            if (filter.DateRange?.From != null)
             {
-                expensesQuery = expensesQuery.Where(e => e.Date >= filter.DateRangePaginationDTO.From);
-                incomesQuery = incomesQuery.Where(e => e.Date >= filter.DateRangePaginationDTO.From);
+                expensesQuery = expensesQuery.Where(e => e.Date >= filter.DateRange.From);
+                incomesQuery = incomesQuery.Where(e => e.Date >= filter.DateRange.From);
             }
 
-            if (filter.DateRangePaginationDTO?.To != null)
+            if (filter.DateRange?.To != null)
             {
-                expensesQuery = expensesQuery.Where(e => e.Date <= filter.DateRangePaginationDTO.To);
-                incomesQuery = incomesQuery.Where(e => e.Date <= filter.DateRangePaginationDTO.To);
+                expensesQuery = expensesQuery.Where(e => e.Date <= filter.DateRange.To);
+                incomesQuery = incomesQuery.Where(e => e.Date <= filter.DateRange.To);
             }
 
             var combinedQuery = incomesQuery
                 .Union(expensesQuery)
                 .OrderByDescending(e => e.Date);
 
-            if (filter.DateRangePaginationDTO?.Pagination != null)
+            if (filter.Pagination != null)
             {
                 combinedQuery = combinedQuery
-                    .Skip(filter.DateRangePaginationDTO.Pagination.PageNumber * filter.DateRangePaginationDTO.Pagination.PageSize)
-                    .Take(filter.DateRangePaginationDTO.Pagination.PageSize)
+                    .Skip(filter.Pagination.PageNumber * filter.Pagination.PageSize)
+                    .Take(filter.Pagination.PageSize)
                     .OrderByDescending(e => e.Date);
             }
 
@@ -117,9 +99,9 @@ namespace DAL.Repositories
             return result;
         }
 
-        public async Task<TransactionsSummaryDTO> GetTransactionsSummaryByDateRange(TransactionSummaryFilter filter, CancellationToken cancellationToken = default)
+        public async Task<TransactionsSummaryDTO> GetTransactionsSummaryByDateRange(TransactionFilter filter, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(filter?.UserId.ToString()))
+            if (filter is null)
             {
                 throw new ArgumentException("Filter is empty");
             }
@@ -159,15 +141,16 @@ namespace DAL.Repositories
                 incomesQuery = incomesQuery.Where(e => e.Date <= filter.DateRange.To);
             }
 
-            var totalIncomesTask = incomesQuery.SumAsync(_ => _.Amount);
-            var totalExpensesTask = expensesQuery.SumAsync(_ => _.Amount);
+            var totalIncomesTask = incomesQuery.SumAsync(i => i.Amount);
+            var totalExpensesTask = expensesQuery.SumAsync(e => e.Amount);
 
-            var result = await Task.WhenAll(totalIncomesTask, totalExpensesTask);
+            await Task.WhenAll(totalIncomesTask, totalExpensesTask);
 
             return new TransactionsSummaryDTO
             {
-                TotalIncomes = result[0],
-                TotalExpenses = result[1]
+                TotalIncomes = totalIncomesTask.Result,
+                TotalExpenses = totalExpensesTask.Result,
+                NetBalance = totalIncomesTask.Result - totalExpensesTask.Result
             };
         }
     }

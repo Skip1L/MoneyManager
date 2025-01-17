@@ -37,30 +37,32 @@ namespace Presentation.Controllers
         [Authorize(Roles = Roles.DefaultUser)]
         public async Task<IActionResult> UpdateTransaction([FromBody] UpdateTransactionDTO transactionDTO, CancellationToken cancellationToken)
         {
-            await _transactionService.UpdateTransactionAsync(transactionDTO, cancellationToken);
+            var user = await _userManager.FindByNameAsync(HttpContext.User.Identity!.Name!);
+            await _transactionService.UpdateTransactionAsync(transactionDTO, user.Id, cancellationToken);
             return Ok();
         }
 
         [HttpDelete("{transactionId}")]
         [Authorize(Roles = Roles.DefaultUser)]
-        public async Task<IActionResult> DeleteTransaction([FromRoute] Guid transactionId, [FromQuery] CategoryType categoryType, CancellationToken cancellationToken)
+        public async Task<IActionResult> DeleteTransaction([FromRoute] Guid transactionId, CancellationToken cancellationToken)
         {
-            await _transactionService.DeleteTransactionAsync(transactionId, categoryType, HttpContext.User.Identity.Name, cancellationToken);
+            var user = await _userManager.FindByNameAsync(HttpContext.User.Identity!.Name!);
+            await _transactionService.DeleteTransactionAsync(transactionId, user.Id, cancellationToken);
             return Ok();
         }
 
         [HttpGet("{transactionId}")]
         [Authorize(Roles = Roles.DefaultUser)]
-        public async Task<IActionResult> GetTransactionById([FromRoute] Guid transactionId, [FromQuery] CategoryType categoryType, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetTransactionById([FromRoute] Guid transactionId, CancellationToken cancellationToken)
         {
             var user = await _userManager.FindByNameAsync(HttpContext.User.Identity!.Name!);
-            var result = await _transactionService.GetTransactionByIdAsync(transactionId, categoryType, user.Id, cancellationToken);
+            var result = await _transactionService.GetTransactionByIdAsync(transactionId, user.Id, cancellationToken);
             return Ok(result);
         }
 
         [HttpPost("summary")]
         [Authorize(Roles = Roles.DefaultUser)]
-        public async Task<ActionResult<TransactionsSummaryDTO>> GetTransactionsSummary([FromBody] TransactionSummaryFilter filter, CancellationToken cancellationToken)
+        public async Task<ActionResult<TransactionsSummaryDTO>> GetTransactionsSummary([FromBody] TransactionFilter filter, CancellationToken cancellationToken)
         {
             var transactions = await _transactionService.GetTransactionsSummary(filter, cancellationToken);
             return Ok(transactions);

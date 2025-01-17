@@ -9,11 +9,11 @@ namespace Services.Mapping
         public TransactionMapperProfile()
         {
             CreateMap<CreateTransactionDTO, Income>()
-                .ForMember(dest => dest.IncomeDate, opt => opt.MapFrom(_ => _.TransactionDate))
+                .ForMember(dest => dest.IncomeDate, opt => opt.MapFrom(income => income.TransactionDate))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));
 
             CreateMap<CreateTransactionDTO, Expense>()
-                .ForMember(dest => dest.ExpenseDate, opt => opt.MapFrom(_ => _.TransactionDate))
+                .ForMember(dest => dest.ExpenseDate, opt => opt.MapFrom(expense => expense.TransactionDate))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));
 
             CreateMap<UpdateTransactionDTO, Income>()
@@ -23,16 +23,16 @@ namespace Services.Mapping
                 .ForMember(dest => dest.LastUpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));
 
             CreateMap<Income, TransactionDTO>()
-                .ForMember(dest => dest.TransactionDate, opt => opt.MapFrom(_ => _.IncomeDate))
-                .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(_ => _.Category.Name))
-                .ForMember(dest => dest.CategoryType, opt => opt.MapFrom(_ => _.Category.CategoryType))
-                .ForMember(dest => dest.BudgetName, opt => opt.MapFrom(_ => _.Budget.Name));
+                .ForMember(dest => dest.TransactionDate, opt => opt.MapFrom(income => income.IncomeDate))
+                .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(income => income.Category.Name))
+                .ForMember(dest => dest.CategoryType, opt => opt.MapFrom(income => income.Category.CategoryType))
+                .ForMember(dest => dest.BudgetName, opt => opt.MapFrom(income => income.Budget.Name));
 
             CreateMap<Expense, TransactionDTO>()
-                .ForMember(dest => dest.TransactionDate, opt => opt.MapFrom(_ => _.ExpenseDate))
-                .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(_ => _.Category.Name))
-                .ForMember(dest => dest.CategoryType, opt => opt.MapFrom(_ => _.Category.CategoryType))
-                .ForMember(dest => dest.BudgetName, opt => opt.MapFrom(_ => _.Budget.Name));
+                .ForMember(dest => dest.TransactionDate, opt => opt.MapFrom(expense => expense.ExpenseDate))
+                .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(expense => expense.Category.Name))
+                .ForMember(dest => dest.CategoryType, opt => opt.MapFrom(expense => expense.Category.CategoryType))
+                .ForMember(dest => dest.BudgetName, opt => opt.MapFrom(expense => expense.Budget.Name));
         }
     }
 }

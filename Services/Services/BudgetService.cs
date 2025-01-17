@@ -37,13 +37,13 @@ namespace Services.Services
             await _budgetRepository.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<List<ShortBudgetDTO>> FilterBudgetAsync(PaginationDTO paginationDto, Guid userId, CancellationToken cancellationToken)
+        public async Task<List<ShortBudgetDTO>> FilterBudgetAsync(PaginationFilter paginationDto, Guid userId, CancellationToken cancellationToken)
         {
             var dbEntity = await _budgetRepository.GetPagedAsync(
                 paginationDto.PageSize,
                 paginationDto.PageNumber,
                 budget => budget.UserId == userId
-                    && (string.IsNullOrWhiteSpace(paginationDto.SearchString) || budget.Name.Contains(paginationDto.SearchString)),
+                    && (string.IsNullOrWhiteSpace(paginationDto.SearchFilter.SearchString) || budget.Name.Contains(paginationDto.SearchFilter.SearchString)),
                 cancellationToken);
 
             return _mapper.Map<List<ShortBudgetDTO>>(dbEntity);
