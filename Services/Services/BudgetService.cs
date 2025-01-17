@@ -33,8 +33,7 @@ namespace Services.Services
                 return;
             }
 
-            _budgetRepository.Delete(budget);
-            await _budgetRepository.SaveChangesAsync(cancellationToken);
+            await _budgetRepository.DeleteAsync(budget.Id, cancellationToken);
         }
 
         public async Task<List<ShortBudgetDTO>> FilterBudgetAsync(DataFilter dataFilter, Guid userId, CancellationToken cancellationToken)

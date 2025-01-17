@@ -26,7 +26,6 @@ namespace Services.Services
         public async Task DeleteCategoryAsync(Guid categoryId, CancellationToken cancellationToken)
         {
             await _categoryRepository.DeleteAsync(categoryId, cancellationToken);
-            await _categoryRepository.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<List<ShortCategoryDTO>> FilterCategoryAsync(DataFilter dataFilter, CategoryType? categoryType, CancellationToken cancellationToken)

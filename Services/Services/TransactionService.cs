@@ -83,32 +83,25 @@ namespace Services.Services
 
         public async Task DeleteTransactionAsync(Guid transactionId, Guid userId, CancellationToken cancellationToken)
         {
-            var deleteExpenseTask = _expenseRepository.FirstOrDefaultAsync(
+            var expense = await _expenseRepository.FirstOrDefaultAsync(
                 expense => expense.Id == transactionId && expense.Budget.UserId == userId,
                 cancellationToken
             );
 
-            var deleteIncomeTask = _incomeRepository.FirstOrDefaultAsync(
+            if (expense != null)
+            {
+                await _expenseRepository.DeleteAsync(expense.Id, cancellationToken);
+                return;
+            }
+
+            var income = await _incomeRepository.FirstOrDefaultAsync(
                 income => income.Id == transactionId && income.Budget.UserId == userId,
                 cancellationToken
             );
 
-            await Task.WhenAll(deleteExpenseTask, deleteIncomeTask);
-
-            var expense = deleteExpenseTask.Result;
-            var income = deleteIncomeTask.Result;
-
-            if (expense != null)
-            {
-                _expenseRepository.Delete(expense);
-                await _expenseRepository.SaveChangesAsync(cancellationToken);
-                return;
-            }
-
             if (income != null)
             {
-                _incomeRepository.Delete(income);
-                await _incomeRepository.SaveChangesAsync(cancellationToken);
+                await _incomeRepository.DeleteAsync(income.Id, cancellationToken);
                 return;
             }
 
@@ -117,18 +110,14 @@ namespace Services.Services
 
         public async Task<TransactionDTO> GetTransactionByIdAsync(Guid transactionId, Guid userId, CancellationToken cancellationToken)
         {
-            var getExpenseTask = _expenseRepository.GetExpenseWithBudgetAndCategoryAsync(transactionId, cancellationToken);
-            var getIncomeTask = _incomeRepository.GetIncomeWithBudgetAndCategoryAsync(transactionId, cancellationToken);
-
-            await Task.WhenAll(getExpenseTask, getIncomeTask);
-
-            var expense = getExpenseTask.Result;
-            var income = getIncomeTask.Result;
+            var expense = await _expenseRepository.GetExpenseWithBudgetAndCategoryAsync(transactionId, cancellationToken);
 
             if (expense != null && expense.Budget.UserId == userId)
             {
                 return _mapper.Map<TransactionDTO>(expense);
             }
+
+            var income = await _incomeRepository.GetIncomeWithBudgetAndCategoryAsync(transactionId, cancellationToken);
 
             if (income != null && income.Budget.UserId == userId)
             {
