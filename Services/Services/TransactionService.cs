@@ -47,7 +47,7 @@ namespace Services.Services
 
         public async Task<List<TransactionDTO>> GetByFilterAsync(TransactionFilter filter, CancellationToken cancellationToken)
         {
-            return await _budgetRepository.GetTransactionsByTransactionFilter(filter, cancellationToken);
+            return await _budgetRepository.GetTransactionsByTransactionFilterAsync(filter, cancellationToken);
         }
 
         public async Task UpdateTransactionAsync(UpdateTransactionDTO transactionDTO, Guid userId, CancellationToken cancellationToken)
@@ -144,9 +144,9 @@ namespace Services.Services
             throw new Exception("Transaction not found");
         }
 
-        public async Task<TransactionsSummaryDTO> GetTransactionsSummary(TransactionFilter filter, CancellationToken cancellationToken)
+        public async Task<TransactionsSummaryDTO> GetTransactionsSummaryAsync(TransactionFilter filter, CancellationToken cancellationToken)
         {
-            return await _budgetRepository.GetTransactionsSummaryByDateRange(filter, cancellationToken);
+            return await _budgetRepository.GetTransactionsSummaryByDateRangeAsync(filter, cancellationToken);
         }
     }
 }

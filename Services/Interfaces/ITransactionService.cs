@@ -10,6 +10,6 @@ namespace Services.Interfaces
         Task<List<TransactionDTO>> GetByFilterAsync(TransactionFilter filter, CancellationToken cancellationToken);
         Task<TransactionDTO> GetTransactionByIdAsync(Guid transactionId, Guid userId, CancellationToken cancellationToken);
         Task UpdateTransactionAsync(UpdateTransactionDTO transactionDTO, Guid userId, CancellationToken cancellationToken);
-        Task<TransactionsSummaryDTO> GetTransactionsSummary(TransactionFilter filter, CancellationToken cancellationToken);
+        Task<TransactionsSummaryDTO> GetTransactionsSummaryAsync(TransactionFilter filter, CancellationToken cancellationToken);
     }
 }

@@ -64,7 +64,7 @@ namespace Presentation.Controllers
         [Authorize(Roles = Roles.DefaultUser)]
         public async Task<ActionResult<TransactionsSummaryDTO>> GetTransactionsSummary([FromBody] TransactionFilter filter, CancellationToken cancellationToken)
         {
-            var transactions = await _transactionService.GetTransactionsSummary(filter, cancellationToken);
+            var transactions = await _transactionService.GetTransactionsSummaryAsync(filter, cancellationToken);
             return Ok(transactions);
         }
     }

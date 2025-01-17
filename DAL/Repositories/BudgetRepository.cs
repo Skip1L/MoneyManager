@@ -17,7 +17,7 @@ namespace DAL.Repositories
                 .FirstOrDefaultAsync(b => b.Id == budgetId, cancellationToken);
         }
 
-        public async Task<List<TransactionDTO>> GetTransactionsByTransactionFilter(TransactionFilter filter, CancellationToken cancellationToken = default)
+        public async Task<List<TransactionDTO>> GetTransactionsByTransactionFilterAsync(TransactionFilter filter, CancellationToken cancellationToken = default)
         {
             if (filter is null)
             {
@@ -99,7 +99,7 @@ namespace DAL.Repositories
             return result;
         }
 
-        public async Task<TransactionsSummaryDTO> GetTransactionsSummaryByDateRange(TransactionFilter filter, CancellationToken cancellationToken = default)
+        public async Task<TransactionsSummaryDTO> GetTransactionsSummaryByDateRangeAsync(TransactionFilter filter, CancellationToken cancellationToken = default)
         {
             if (filter is null)
             {
@@ -141,8 +141,8 @@ namespace DAL.Repositories
                 incomesQuery = incomesQuery.Where(e => e.Date <= filter.DateRange.To);
             }
 
-            var totalIncomesTask = incomesQuery.SumAsync(i => i.Amount);
-            var totalExpensesTask = expensesQuery.SumAsync(e => e.Amount);
+            var totalIncomesTask = incomesQuery.SumAsync(i => i.Amount, cancellationToken);
+            var totalExpensesTask = expensesQuery.SumAsync(e => e.Amount, cancellationToken);
 
             await Task.WhenAll(totalIncomesTask, totalExpensesTask);
 

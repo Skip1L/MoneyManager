@@ -25,7 +25,7 @@ namespace Services.Services
 
         public async Task DeleteBudgetAsync(Guid budgetId, Guid userId, CancellationToken cancellationToken)
         {
-            var budget = await _budgetRepository.FirstOrDefaultAsync(budget => budget.Id == budgetId && budget.UserId == userId);
+            var budget = await _budgetRepository.FirstOrDefaultAsync(budget => budget.Id == budgetId && budget.UserId == userId, cancellationToken);
 
             if (budget == null)
             {
