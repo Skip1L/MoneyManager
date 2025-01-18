@@ -32,7 +32,6 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddScoped<IBudgetRepository, BudgetRepository>();
 builder.Services.AddScoped<IIncomeRepository, IncomeRepository>();
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();

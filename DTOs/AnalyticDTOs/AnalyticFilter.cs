@@ -7,6 +7,7 @@ namespace DTOs.AnalyticDTOs
     {
         public Guid UserId { get; set; }
         public CategoryType? CategoryType { get; set; }
-        public DataFilter DataFilter { get; set; }
+        public PaginationFilter PaginationFilter { get; set; }
+        public DateRangeFilter DateRangeFilter { get; set; }
     }
 }

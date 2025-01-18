@@ -1,4 +1,5 @@
-﻿using DTOs.AnalyticDTOs;
+﻿using Domain.Constants;
+using DTOs.AnalyticDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
@@ -12,7 +13,8 @@ namespace Presentation.Controllers
     {
         private readonly IAnalyticService _analyticsService = analyticService;
 
-        [HttpPost()]
+        [HttpPost("getTransactionAnalytics")]
+        [Authorize(Roles = Roles.DefaultUser)]
         public async Task<IActionResult> GetAnalytics([FromBody] AnalyticFilter filter, CancellationToken cancellationToken)
         {
             var result = await _analyticsService.GetAnalyticsByFilter(filter, cancellationToken);

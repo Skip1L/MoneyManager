@@ -5,22 +5,20 @@ using Services.RepositoryInterfaces;
 
 namespace Services.Services
 {
-    public class AnalyticService(IBudgetRepository budgetRepository, ICategoryRepository categoryRepository) : IAnalyticService
+    public class AnalyticService(IBudgetRepository budgetRepository, IIncomeRepository incomeRepository, IExpenseRepository expenseRepository) : IAnalyticService
     {
-        private readonly ICategoryRepository _categoryRepository = categoryRepository;
+        private readonly IIncomeRepository _incomeRepository = incomeRepository;
+        private readonly IExpenseRepository _expenseRepository = expenseRepository;
         private readonly IBudgetRepository _budgetRepository = budgetRepository;
 
         public async Task<List<AnalyticDTO>> GetAnalyticsByFilter(AnalyticFilter filter, CancellationToken cancellationToken)
         {
-            switch (filter.CategoryType)
+            return filter.CategoryType switch
             {
-                case CategoryType.Income:
-                    return await _categoryRepository.GetIncomeAnalyticsByFilter(filter, cancellationToken);
-                case CategoryType.Expense:
-                    return await _categoryRepository.GetExpenseAnalyticsByFilter(filter, cancellationToken);
-                default:
-                    return await _budgetRepository.GetBudgetsAnalyticByFilter(filter, cancellationToken);
-            }
+                CategoryType.Income => await _incomeRepository.GetTotalIncomeByCategoriesAsync(filter, cancellationToken),
+                CategoryType.Expense => await _expenseRepository.GetTotalExpenseByCategoriesAsync(filter, cancellationToken),
+                _ => await _budgetRepository.GetTotalTransactionsByBudgetAsync(filter, cancellationToken),
+            };
         }
     }
 }

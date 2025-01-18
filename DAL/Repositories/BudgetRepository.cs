@@ -170,7 +170,7 @@ namespace DAL.Repositories
             };
         }
 
-        public async Task<List<AnalyticDTO>> GetBudgetsAnalyticByFilter(AnalyticFilter filter, CancellationToken cancellationToken)
+        public async Task<List<AnalyticDTO>> GetTotalTransactionsByBudgetAsync(AnalyticFilter filter, CancellationToken cancellationToken)
         {
             if (filter is null)
             {
@@ -196,25 +196,25 @@ namespace DAL.Repositories
                     })
                 });
 
-            if (filter.DataFilter.DateRangeFilter?.From != null)
+            if (filter.DateRangeFilter?.From != null)
             {
                 query = query.Select(budgetData => new
                 {
                     budgetData.BudgetId,
                     budgetData.BudgetName,
-                    Incomes = budgetData.Incomes.Where(i => i.IncomeDate >= filter.DataFilter.DateRangeFilter.From),
-                    Expenses = budgetData.Expenses.Where(e => e.ExpenseDate >= filter.DataFilter.DateRangeFilter.From)
+                    Incomes = budgetData.Incomes.Where(i => i.IncomeDate >= filter.DateRangeFilter.From),
+                    Expenses = budgetData.Expenses.Where(e => e.ExpenseDate >= filter.DateRangeFilter.From)
                 });
             }
 
-            if (filter.DataFilter.DateRangeFilter?.To != null)
+            if (filter.DateRangeFilter?.To != null)
             {
                 query = query.Select(budgetData => new
                 {
                     budgetData.BudgetId,
                     budgetData.BudgetName,
-                    Incomes = budgetData.Incomes.Where(i => i.IncomeDate <= filter.DataFilter.DateRangeFilter.To),
-                    Expenses = budgetData.Expenses.Where(e => e.ExpenseDate <= filter.DataFilter.DateRangeFilter.To)
+                    Incomes = budgetData.Incomes.Where(i => i.IncomeDate <= filter.DateRangeFilter.To),
+                    Expenses = budgetData.Expenses.Where(e => e.ExpenseDate <= filter.DateRangeFilter.To)
                 });
             }
 
