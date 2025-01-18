@@ -1,5 +1,6 @@
 ﻿using Domain.Entities;
 using Domain.Enums;
+using DTOs.AnalyticDTOs;
 using DTOs.TransactionDTOs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -167,6 +168,67 @@ namespace DAL.Repositories
                 TotalExpenses = await totalExpensesTask,
                 NetBalance = await totalIncomesTask - await totalExpensesTask
             };
+        }
+
+        public async Task<List<AnalyticDTO>> GetBudgetsAnalyticByFilter(AnalyticFilter filter, CancellationToken cancellationToken)
+        {
+            if (filter is null)
+            {
+                throw new ArgumentException("Filter is empty");
+            }
+
+            var query = _repositoryContext.Budgets
+                .AsNoTracking()
+                .Where(budget => budget.UserId == filter.UserId)
+                .Select(budget => new
+                {
+                    BudgetId = budget.Id,
+                    BudgetName = budget.Name,
+                    Incomes = budget.Incomes.Select(i => new
+                    {
+                        i.IncomeDate,
+                        i.Amount
+                    }),
+                    Expenses = budget.Expenses.Select(i => new
+                    {
+                        i.ExpenseDate,
+                        i.Amount
+                    })
+                });
+
+            if (filter.DataFilter.DateRangeFilter?.From != null)
+            {
+                query = query.Select(budgetData => new
+                {
+                    budgetData.BudgetId,
+                    budgetData.BudgetName,
+                    Incomes = budgetData.Incomes.Where(i => i.IncomeDate >= filter.DataFilter.DateRangeFilter.From),
+                    Expenses = budgetData.Expenses.Where(e => e.ExpenseDate >= filter.DataFilter.DateRangeFilter.From)
+                });
+            }
+
+            if (filter.DataFilter.DateRangeFilter?.To != null)
+            {
+                query = query.Select(budgetData => new
+                {
+                    budgetData.BudgetId,
+                    budgetData.BudgetName,
+                    Incomes = budgetData.Incomes.Where(i => i.IncomeDate <= filter.DataFilter.DateRangeFilter.To),
+                    Expenses = budgetData.Expenses.Where(e => e.ExpenseDate <= filter.DataFilter.DateRangeFilter.To)
+                });
+            }
+
+            var budgetSummary = await query
+                .Select(budgetData => new AnalyticDTO
+                {
+                    Id = budgetData.BudgetId,
+                    Name = budgetData.BudgetName,
+                    TotalIncome = budgetData.Incomes.Sum(i => i.Amount),
+                    TotalExpense = budgetData.Expenses.Sum(e => e.Amount)
+                })
+                .ToListAsync(cancellationToken);
+
+            return budgetSummary;
         }
     }
 }
