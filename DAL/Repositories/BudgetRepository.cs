@@ -177,7 +177,8 @@ namespace DAL.Repositories
                 throw new ArgumentException("Filter is empty");
             }
 
-            var query = _repositoryContext.Budgets
+            var query = _repositoryContext
+                .Budgets
                 .AsNoTracking()
                 .Where(budget => budget.UserId == filter.UserId)
                 .Select(budget => new

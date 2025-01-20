@@ -29,12 +29,12 @@ namespace DAL.Repositories
                 .AsNoTracking()
                 .Where(e => e.Budget.UserId == filter.UserId);
 
-            if (filter?.DateRangeFilter?.From != null)
+            if (filter.DateRangeFilter?.From != null)
             {
                 query = query.Where(e => e.ExpenseDate >= filter.DateRangeFilter.From);
             }
 
-            if (filter?.DateRangeFilter?.To != null)
+            if (filter.DateRangeFilter?.To != null)
             {
                 query = query.Where(e => e.ExpenseDate <= filter.DateRangeFilter.To);
             }
@@ -45,7 +45,7 @@ namespace DAL.Repositories
                 {
                     Id = group.Key.CategoryId,
                     Name = group.Key.CategoryName,
-                    TotalExpense = -group.Sum(e => e.Amount)
+                    TotalExpense = group.Sum(e => e.Amount)
                 });
 
             var expenseAnalytics = await groupedExpenses.ToListAsync(cancellationToken);
