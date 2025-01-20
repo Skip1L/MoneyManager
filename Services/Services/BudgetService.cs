@@ -25,15 +25,12 @@ namespace Services.Services
 
         public async Task DeleteBudgetAsync(Guid budgetId, Guid userId, CancellationToken cancellationToken)
         {
-            var budget = await _budgetRepository.FirstOrDefaultAsync(budget => budget.Id == budgetId && budget.UserId == userId, cancellationToken);
+            var result = await _budgetRepository.DeleteAsync(budgetId, cancellationToken);
 
-            if (budget == null)
+            if (!result)
             {
                 _logger.LogError($"Budget is not found. budgetId: {budgetId}; userId: {userId}");
-                return;
             }
-
-            await _budgetRepository.DeleteAsync(budget.Id, cancellationToken);
         }
 
         public async Task<List<ShortBudgetDTO>> FilterBudgetAsync(DataFilter dataFilter, Guid userId, CancellationToken cancellationToken)

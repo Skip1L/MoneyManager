@@ -83,29 +83,17 @@ namespace Services.Services
 
         public async Task DeleteTransactionAsync(Guid transactionId, Guid userId, CancellationToken cancellationToken)
         {
-            var expense = await _expenseRepository.FirstOrDefaultAsync(
-                expense => expense.Id == transactionId && expense.Budget.UserId == userId,
-                cancellationToken
-            );
+            var result = await _expenseRepository.DeleteAsync(transactionId, cancellationToken);
 
-            if (expense != null)
+            if (!result)
             {
-                await _expenseRepository.DeleteAsync(expense.Id, cancellationToken);
-                return;
+                result = await _incomeRepository.DeleteAsync(transactionId, cancellationToken);
             }
 
-            var income = await _incomeRepository.FirstOrDefaultAsync(
-                income => income.Id == transactionId && income.Budget.UserId == userId,
-                cancellationToken
-            );
-
-            if (income != null)
+            if (!result)
             {
-                await _incomeRepository.DeleteAsync(income.Id, cancellationToken);
-                return;
+                _logger.LogError($"Transaction not found. transactionId: {transactionId}; userName: {userId}");
             }
-
-            _logger.LogError($"Transaction not found. transactionId: {transactionId}; userName: {userId}");
         }
 
         public async Task<TransactionDTO> GetTransactionByIdAsync(Guid transactionId, Guid userId, CancellationToken cancellationToken)

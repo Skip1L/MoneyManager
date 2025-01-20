@@ -25,9 +25,12 @@ namespace DAL.Repositories
             _repositoryContext.Set<TEntity>().Remove(entity);
         }
 
-        public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            await _repositoryContext.Set<TEntity>().Where(e => e.Id == id).ExecuteDeleteAsync();
+            return await _repositoryContext
+                .Set<TEntity>()
+                .Where(e => e.Id == id)
+                .ExecuteDeleteAsync(cancellationToken) > 0;
         }
 
         public async Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter = null, CancellationToken cancellationToken = default)

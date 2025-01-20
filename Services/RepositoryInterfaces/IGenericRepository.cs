@@ -10,7 +10,7 @@ namespace Services.RepositoryInterfaces
         Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter = null, CancellationToken cancellationToken = default);
         void Update(TEntity entity);
         void Delete(TEntity entity);
-        Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
         Task CreateAsync(TEntity entity, CancellationToken cancellationToken = default);
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
