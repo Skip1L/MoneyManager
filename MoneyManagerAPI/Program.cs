@@ -3,6 +3,7 @@ using DAL;
 using DAL.Repositories;
 using Domain.Entities;
 using Domain.Helpers;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ using MoneyManagerAPI.Helpers;
 using MoneyManagerAPI.Middlewares;
 using Serilog;
 using Services.Interfaces;
+using Services.Jobs;
 using Services.Mapping;
 using Services.RepositoryInterfaces;
 using Services.Services;
@@ -20,6 +22,10 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = Environment.GetEnvironmentVariable("MoneyManagerDBConnectionString")
     ?? builder.Configuration.GetConnectionString("MoneyManagerDBConnectionString")
     ?? "Server=(localdb)\\MSSQLLocalDB;Database=MoneyManagerDB;Trusted_Connection=True;";
+var hangfireConnectionString = Environment.GetEnvironmentVariable("HangfireDBConnectionString")
+    ?? builder.Configuration.GetConnectionString("HangfireDBConnectionString")
+    ?? "Server=(localdb)\\MSSQLLocalDB;Database=HangfireDB;Trusted_Connection=True;";
+
 
 builder.Services.AddDbContext<ApplicationContext>(options =>
 {
@@ -38,7 +44,16 @@ builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IAnalyticService, AnalyticService>();
 
+builder.Services.AddScoped<WeeklyAnalyticJob>();
+
 builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile), typeof(CategoryMapperProfile), typeof(TransactionMapperProfile));
+
+builder.Services.AddHangfire(config =>
+{
+    config.UseSqlServerStorage(hangfireConnectionString);
+});
+
+builder.Services.AddHangfireServer();
 
 builder.Services.AddControllers();
 
@@ -128,6 +143,15 @@ app.UseMiddleware<ExceptionsMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseHangfireDashboard();
+
+RecurringJob.AddOrUpdate<WeeklyAnalyticJob>(
+    "WeeklyAnalyticsJob",
+    job => job.Execute(CancellationToken.None),
+    Cron.Weekly(DayOfWeek.Monday, 9),
+    new RecurringJobOptions()
+);
 
 app.MapControllers();
 
