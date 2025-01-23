@@ -46,7 +46,7 @@ builder.Services.AddScoped<IAnalyticService, AnalyticService>();
 
 builder.Services.AddScoped<WeeklyAnalyticJob>();
 
-builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile), typeof(CategoryMapperProfile), typeof(TransactionMapperProfile));
+builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile), typeof(CategoryMapperProfile), typeof(TransactionMapperProfile), typeof(AnalyticMapperProfile));
 
 builder.Services.AddHangfire(config =>
 {
@@ -54,6 +54,7 @@ builder.Services.AddHangfire(config =>
 });
 
 builder.Services.AddHangfireServer();
+builder.Services.AddHttpClient();
 
 builder.Services.AddControllers();
 
