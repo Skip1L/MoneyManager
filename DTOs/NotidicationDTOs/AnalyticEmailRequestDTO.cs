@@ -1,4 +1,5 @@
-﻿using DTOs.TransactionDTOs;
+﻿using DTOs.CommonDTOs;
+using DTOs.TransactionDTOs;
 
 namespace DTOs.NotidicationDTOs
 {
@@ -10,5 +11,6 @@ namespace DTOs.NotidicationDTOs
         public List<CategoryReportDTO> Expenses { get; set; }
         public List<BudgetReportDTO> Budgets { get; set; }
         public TransactionsSummaryDTO TransactionsSummary { get; set; }
+        public DateRangeFilter DateRange { get; set; }
     }
 }

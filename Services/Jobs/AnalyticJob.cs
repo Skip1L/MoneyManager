@@ -15,15 +15,21 @@ using Services.RepositoryInterfaces;
 
 namespace Services.Jobs
 {
-    public class WeeklyAnalyticJob(ILogger<WeeklyAnalyticJob> logger, IServiceScopeFactory serviceScopeFactory, HttpClient httpClient, IMapper mapper)
+    public class AnalyticJob(ILogger<AnalyticJob> logger, IServiceScopeFactory serviceScopeFactory, HttpClient httpClient, IMapper mapper)
     {
         private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
         private readonly HttpClient _httpClient = httpClient;
         private readonly IMapper _mapper = mapper;
-        private readonly ILogger<WeeklyAnalyticJob> _logger = logger;
-
-        public async Task Execute(CancellationToken cancellationToken)
+        private readonly ILogger<AnalyticJob> _logger = logger;
+        
+        public async Task Execute(DateTime From, DateTime To, CancellationToken cancellationToken)
         {
+            DateRangeFilter DateRange = new()
+            {
+                From = From,
+                To = To
+            };
+
             using var scope = _serviceScopeFactory.CreateScope();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
             var users = await userManager.GetUsersInRoleAsync(Roles.DefaultUser);
@@ -32,28 +38,29 @@ namespace Services.Jobs
 
             foreach (var user in users)
             {
-                tasks.Add(ProcessAndSendEmailAsync(user, cancellationToken));
+                tasks.Add(ProcessAndSendEmailAsync(user, DateRange, cancellationToken));
             }
 
             await Task.WhenAll(tasks);
         }
 
-        private async Task ProcessAndSendEmailAsync(User user, CancellationToken cancellationToken)
+        private async Task ProcessAndSendEmailAsync(User user, DateRangeFilter dateRange, CancellationToken cancellationToken)
         {
             var emailReport = new AnalyticEmailRequestDTO
             {
                 RecipientName = $"{user.FirstName} {user.LastName}",
                 ToEmail = user.Email,
-                Incomes = await GetIncomeReportsAsync(user, cancellationToken),
-                Expenses = await GetExpenseReportsAsync(user, cancellationToken),
-                Budgets = await GetBudgetReportsAsync(user, cancellationToken),
-                TransactionsSummary = await GetTotalTransactionsReportsAsync(user, cancellationToken)
+                DateRange = dateRange,
+                Incomes = await GetIncomeReportsAsync(user, dateRange, cancellationToken),
+                Expenses = await GetExpenseReportsAsync(user, dateRange, cancellationToken),
+                Budgets = await GetBudgetReportsAsync(user, dateRange, cancellationToken),
+                TransactionsSummary = await GetTotalTransactionsReportsAsync(user, dateRange, cancellationToken)
             };
 
             await SendEmailReportAsync(emailReport, cancellationToken);
         }
 
-        private async Task<List<CategoryReportDTO>> GetIncomeReportsAsync(User user, CancellationToken cancellationToken)
+        private async Task<List<CategoryReportDTO>> GetIncomeReportsAsync(User user, DateRangeFilter dateRange, CancellationToken cancellationToken)
         {
             using var scope = _serviceScopeFactory.CreateScope();
             var incomeRepository = scope.ServiceProvider.GetRequiredService<IIncomeRepository>();
@@ -63,7 +70,7 @@ namespace Services.Jobs
                 UserId = user.Id,
                 CategoryType = CategoryType.Income,
                 PaginationFilter = new PaginationFilter { PageNumber = 1, PageSize = 10 },
-                DateRangeFilter = new DateRangeFilter { From = DateTime.MinValue, To = DateTime.UtcNow }
+                DateRangeFilter = dateRange
             };
 
             var analytics = await incomeRepository.GetTotalIncomeByCategoriesAsync(filter, cancellationToken);
@@ -77,7 +84,7 @@ namespace Services.Jobs
                    .ToList();
         }
 
-        private async Task<TransactionsSummaryDTO> GetTotalTransactionsReportsAsync(User user, CancellationToken cancellationToken)
+        private async Task<TransactionsSummaryDTO> GetTotalTransactionsReportsAsync(User user, DateRangeFilter dateRange, CancellationToken cancellationToken)
         {
             using var scope = _serviceScopeFactory.CreateScope();
             var incomeRepository = scope.ServiceProvider.GetRequiredService<IBudgetRepository>();
@@ -86,13 +93,13 @@ namespace Services.Jobs
             {
                 UserId = user.Id,
                 Pagination = new PaginationFilter { PageNumber = 1, PageSize = 10 },
-                DateRange = new DateRangeFilter { From = DateTime.MinValue, To = DateTime.UtcNow }
+                DateRange = dateRange
             };
 
             return await incomeRepository.GetTransactionsSummaryByDateRangeAsync(filter, cancellationToken);
         }
 
-        private async Task<List<CategoryReportDTO>> GetExpenseReportsAsync(User user, CancellationToken cancellationToken)
+        private async Task<List<CategoryReportDTO>> GetExpenseReportsAsync(User user, DateRangeFilter dateRange, CancellationToken cancellationToken)
         {
             using var scope = _serviceScopeFactory.CreateScope();
             var expenseRepository = scope.ServiceProvider.GetRequiredService<IExpenseRepository>();
@@ -102,7 +109,7 @@ namespace Services.Jobs
                 UserId = user.Id,
                 CategoryType = CategoryType.Expense,
                 PaginationFilter = new PaginationFilter { PageNumber = 1, PageSize = 10 },
-                DateRangeFilter = new DateRangeFilter { From = DateTime.MinValue, To = DateTime.UtcNow }
+                DateRangeFilter = dateRange
             };
 
             var analytics = await expenseRepository.GetTotalExpenseByCategoriesAsync(filter, cancellationToken);
@@ -116,7 +123,7 @@ namespace Services.Jobs
                   .ToList();
         }
 
-        private async Task<List<BudgetReportDTO>> GetBudgetReportsAsync(User user, CancellationToken cancellationToken)
+        private async Task<List<BudgetReportDTO>> GetBudgetReportsAsync(User user, DateRangeFilter dateRange, CancellationToken cancellationToken)
         {
             using var scope = _serviceScopeFactory.CreateScope();
             var budgetRepository = scope.ServiceProvider.GetRequiredService<IBudgetRepository>();
@@ -126,7 +133,7 @@ namespace Services.Jobs
                 UserId = user.Id,
                 CategoryType = null,
                 PaginationFilter = new PaginationFilter { PageNumber = 1, PageSize = 10 },
-                DateRangeFilter = new DateRangeFilter { From = DateTime.UtcNow.AddDays(-7), To = DateTime.UtcNow }
+                DateRangeFilter = dateRange
             };
          
             var analytics = await budgetRepository.GetTotalTransactionsByBudgetAsync(filter, cancellationToken);

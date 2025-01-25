@@ -44,7 +44,7 @@ builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IAnalyticService, AnalyticService>();
 
-builder.Services.AddScoped<WeeklyAnalyticJob>();
+builder.Services.AddScoped<AnalyticJob>();
 
 builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile), typeof(CategoryMapperProfile), typeof(TransactionMapperProfile), typeof(AnalyticMapperProfile));
 
@@ -147,9 +147,9 @@ app.UseAuthorization();
 
 app.UseHangfireDashboard();
 
-RecurringJob.AddOrUpdate<WeeklyAnalyticJob>(
+RecurringJob.AddOrUpdate<AnalyticJob>(
     "WeeklyAnalyticsJob",
-    job => job.Execute(CancellationToken.None),
+    job => job.Execute(DateTime.UtcNow.AddDays(-7), DateTime.UtcNow, CancellationToken.None),
     Cron.Weekly(DayOfWeek.Monday, 9),
     new RecurringJobOptions()
 );
