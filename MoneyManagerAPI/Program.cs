@@ -9,11 +9,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MoneyManagerAPI.Extensions;
 using MoneyManagerAPI.Helpers;
 using MoneyManagerAPI.Middlewares;
 using Serilog;
 using Services.Interfaces;
-using Services.Jobs;
 using Services.Mapping;
 using Services.RepositoryInterfaces;
 using Services.Services;
@@ -44,8 +44,6 @@ builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IAnalyticService, AnalyticService>();
 
-builder.Services.AddScoped<AnalyticJob>();
-
 builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile), typeof(CategoryMapperProfile), typeof(TransactionMapperProfile), typeof(AnalyticMapperProfile));
 
 builder.Services.AddHangfire(config =>
@@ -54,7 +52,12 @@ builder.Services.AddHangfire(config =>
 });
 
 builder.Services.AddHangfireServer();
-builder.Services.AddHttpClient();
+
+builder.Services.AddHttpClient("notification-service", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["NotificationService:Uri"] ?? "http://localhost:6002");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
 
 builder.Services.AddControllers();
 
@@ -147,12 +150,7 @@ app.UseAuthorization();
 
 app.UseHangfireDashboard();
 
-RecurringJob.AddOrUpdate<AnalyticJob>(
-    "WeeklyAnalyticsJob",
-    job => job.Execute(DateTime.UtcNow.AddDays(-7), DateTime.UtcNow, CancellationToken.None),
-    Cron.Weekly(DayOfWeek.Monday, 9),
-    new RecurringJobOptions()
-);
+app.Services.AddRecurringJobs();
 
 app.MapControllers();
 
