@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Diagnostics;
+using System.Net.Http.Json;
 using AutoMapper;
 using Domain.Constants;
 using Domain.Entities;
@@ -10,6 +11,7 @@ using DTOs.TransactionDTOs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Services.Jobs.Constants;
 using Services.RepositoryInterfaces;
 
 namespace Services.Jobs
@@ -20,15 +22,11 @@ namespace Services.Jobs
         private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
         private readonly IMapper _mapper = mapper;
         private readonly ILogger<WeeklyAnalyticJob> _logger = logger;
-        private const string SendWeeklyReports = "/send-weekly-reports";
+        private const string sendWeeklyReports = "/send-weekly-reports";
 
         public async Task Execute()
         {
-            var dateRange = new DateRangeFilter()
-            {
-                From = DateTime.Today.AddDays(-7),
-                To = DateTime.Today
-            };
+            var dateRange = GetLastWeekDateRangeFilter();
 
             using var scope = _serviceScopeFactory.CreateScope();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
@@ -36,7 +34,10 @@ namespace Services.Jobs
 
             _logger.LogInformation("Weekly Analytic Job Started\n" +
                 $"From: {dateRange.From}; To: {dateRange.To}\n" +
-                $"For users: {string.Join(',', users.Select(u => $"{u.FirstName} {u.LastName}"))}");
+                $"For users: {string.Join(',', users.Select(u => u.Id))}");
+
+            var stopWatch = Stopwatch.StartNew();
+            stopWatch.Start();
 
             await Parallel.ForEachAsync(
                 users,
@@ -48,7 +49,8 @@ namespace Services.Jobs
                     await ProcessAndSendEmailAsync(user, dateRange, cancellationToken);
                 });
 
-            _logger.LogInformation("Weekly Analytic Job Finished");
+            stopWatch.Stop();
+            _logger.LogInformation($"Weekly Analytic Job Finished. Time Elapsed: {stopWatch.Elapsed}");
         }
 
         private async Task ProcessAndSendEmailAsync(User user, DateRangeFilter dateRange, CancellationToken cancellationToken)
@@ -146,9 +148,9 @@ namespace Services.Jobs
 
         private async Task SendEmailReportAsync(AnalyticEmailRequestDTO emailReport, CancellationToken cancellationToken)
         {
-            var client = _httpClientFactory.CreateClient("notification-service");
+            var client = _httpClientFactory.CreateClient(HttpClientNames.notificationServiceName);
 
-            var response = await client.PostAsJsonAsync(SendWeeklyReports, emailReport, cancellationToken);
+            var response = await client.PostAsJsonAsync(sendWeeklyReports, emailReport, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -159,6 +161,15 @@ namespace Services.Jobs
         private static double CalculatePercentage(double amount, double total)
         {
             return total > 0 ? (amount / total) * 100 : 0;
+        }
+
+        private static DateRangeFilter GetLastWeekDateRangeFilter()
+        {
+            return new DateRangeFilter
+            {
+                From = DateTime.Today.AddDays(-7),
+                To = DateTime.Today
+            };
         }
     }
 }

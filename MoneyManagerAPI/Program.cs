@@ -14,6 +14,7 @@ using MoneyManagerAPI.Helpers;
 using MoneyManagerAPI.Middlewares;
 using Serilog;
 using Services.Interfaces;
+using Services.Jobs.Constants;
 using Services.Mapping;
 using Services.RepositoryInterfaces;
 using Services.Services;
@@ -53,10 +54,10 @@ builder.Services.AddHangfire(config =>
 
 builder.Services.AddHangfireServer();
 
-builder.Services.AddHttpClient("notification-service", client =>
+builder.Services.AddHttpClient(HttpClientNames.notificationServiceName, client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["NotificationService:Uri"] ?? "http://localhost:6002");
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Add("x-api-key", Environment.GetEnvironmentVariable("NotificationApiKey"));
 });
 
 builder.Services.AddControllers();
