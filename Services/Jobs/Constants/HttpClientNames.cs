@@ -2,6 +2,6 @@
 {
     public static class HttpClientNames
     {
-        public const string notificationServiceName = "notification-service";
+        public const string NotificationServiceName = "notification-service";
     }
 }

@@ -54,7 +54,7 @@ builder.Services.AddHangfire(config =>
 
 builder.Services.AddHangfireServer();
 
-builder.Services.AddHttpClient(HttpClientNames.notificationServiceName, client =>
+builder.Services.AddHttpClient(HttpClientNames.NotificationServiceName, client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["NotificationService:Uri"] ?? "http://localhost:6002");
     client.DefaultRequestHeaders.Add("x-api-key", Environment.GetEnvironmentVariable("NotificationApiKey"));

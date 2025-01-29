@@ -148,7 +148,7 @@ namespace Services.Jobs
 
         private async Task SendEmailReportAsync(AnalyticEmailRequestDTO emailReport, CancellationToken cancellationToken)
         {
-            var client = _httpClientFactory.CreateClient(HttpClientNames.notificationServiceName);
+            var client = _httpClientFactory.CreateClient(HttpClientNames.NotificationServiceName);
 
             var response = await client.PostAsJsonAsync(sendWeeklyReports, emailReport, cancellationToken);
 
