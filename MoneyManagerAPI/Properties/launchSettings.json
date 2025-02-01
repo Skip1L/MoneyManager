@@ -24,8 +24,10 @@
             "API_KEY": "sjgienghs;vcsfrtuifs1)d56fdsaw67",
             "ASPNETCORE_ENVIRONMENT": "Development",
             "AUDIENCE": "MoneyTrackerHost",
+            "HangfireDBConnectionString": "Server=(localdb)\\MSSQLLocalDB;Database=HangfireDB;Trusted_Connection=True;",
             "ISSUER": "MoneyTrackerIssuer",
             "MoneyManagerDBConnectionString": "Server=(localdb)\\MSSQLLocalDB;Database=MoneyManagerDB;Trusted_Connection=True;",
+            "NotificationApiKey": "31d75479d3664979949e78e2a8d68995",
             "TOKEN_EXPIRATION_TIME": "7200"
         }
     }

@@ -3,15 +3,18 @@ using DAL;
 using DAL.Repositories;
 using Domain.Entities;
 using Domain.Helpers;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MoneyManagerAPI.Extensions;
 using MoneyManagerAPI.Helpers;
 using MoneyManagerAPI.Middlewares;
 using Serilog;
 using Services.Interfaces;
+using Services.Jobs.Constants;
 using Services.Mapping;
 using Services.RepositoryInterfaces;
 using Services.Services;
@@ -20,6 +23,10 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = Environment.GetEnvironmentVariable("MoneyManagerDBConnectionString")
     ?? builder.Configuration.GetConnectionString("MoneyManagerDBConnectionString")
     ?? "Server=(localdb)\\MSSQLLocalDB;Database=MoneyManagerDB;Trusted_Connection=True;";
+var hangfireConnectionString = Environment.GetEnvironmentVariable("HangfireDBConnectionString")
+    ?? builder.Configuration.GetConnectionString("HangfireDBConnectionString")
+    ?? "Server=(localdb)\\MSSQLLocalDB;Database=HangfireDB;Trusted_Connection=True;";
+
 
 builder.Services.AddDbContext<ApplicationContext>(options =>
 {
@@ -38,7 +45,20 @@ builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IAnalyticService, AnalyticService>();
 
-builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile), typeof(CategoryMapperProfile), typeof(TransactionMapperProfile));
+builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile), typeof(CategoryMapperProfile), typeof(TransactionMapperProfile), typeof(AnalyticMapperProfile));
+
+builder.Services.AddHangfire(config =>
+{
+    config.UseSqlServerStorage(hangfireConnectionString);
+});
+
+builder.Services.AddHangfireServer();
+
+builder.Services.AddHttpClient(HttpClientNames.NotificationServiceName, client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["NotificationService:Uri"] ?? "http://localhost:6002");
+    client.DefaultRequestHeaders.Add("x-api-key", Environment.GetEnvironmentVariable("NotificationApiKey"));
+});
 
 builder.Services.AddControllers();
 
@@ -128,6 +148,10 @@ app.UseMiddleware<ExceptionsMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseHangfireDashboard();
+
+app.Services.AddRecurringJobs();
 
 app.MapControllers();
 
