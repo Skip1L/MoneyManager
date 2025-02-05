@@ -8,8 +8,8 @@ namespace MoneyManagerAPI.Extensions
     {
         public static void AddRecurringJobs(this IServiceProvider serviceProvider)
         {
-            RecurringJob.AddOrUpdate<WeeklyAnalyticJob>(
-                nameof(WeeklyAnalyticJob),
+            RecurringJob.AddOrUpdate<GrpcWeeklyAnalyticJob>(
+                nameof(GrpcWeeklyAnalyticJob),
                 job => job.Execute(),
                 Cron.Weekly(DayOfWeek.Monday, 9),
                 new RecurringJobOptions()
