@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Net.Http.Json;
 using AutoMapper;
 using Domain.Constants;
 using Domain.Entities;
@@ -11,18 +10,15 @@ using DTOs.TransactionDTOs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Services.Jobs.Constants;
 using Services.RepositoryInterfaces;
 
 namespace Services.Jobs
 {
-    public class WeeklyAnalyticJob(ILogger<WeeklyAnalyticJob> logger, IServiceScopeFactory serviceScopeFactory, IHttpClientFactory httpClientFactory, IMapper mapper)
+    public abstract class BaseWeeklyAnalyticJob(ILogger<BaseWeeklyAnalyticJob> logger, IServiceScopeFactory serviceScopeFactory, IMapper mapper)
     {
         private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
-        private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
         private readonly IMapper _mapper = mapper;
-        private readonly ILogger<WeeklyAnalyticJob> _logger = logger;
-        private const string sendWeeklyReports = "/send-weekly-reports";
+        private readonly ILogger<BaseWeeklyAnalyticJob> _logger = logger;
 
         public async Task Execute()
         {
@@ -41,9 +37,10 @@ namespace Services.Jobs
 
             await Parallel.ForEachAsync(
                 users,
-                new ParallelOptions { 
+                new ParallelOptions
+                {
                     MaxDegreeOfParallelism = 10,
-                }, 
+                },
                 async (user, cancellationToken) =>
                 {
                     await ProcessAndSendEmailAsync(user, dateRange, cancellationToken);
@@ -66,8 +63,10 @@ namespace Services.Jobs
                 TransactionsSummary = await GetTotalTransactionsReportsAsync(user, dateRange, cancellationToken)
             };
 
-            await SendEmailReportAsync(emailReport, cancellationToken);
+            await SendReportAsync(emailReport, cancellationToken);
         }
+
+        protected abstract Task SendReportAsync(AnalyticEmailRequestDTO emailReport, CancellationToken cancellationToken);
 
         private async Task<List<CategoryReportDTO>> GetIncomeReportsAsync(User user, DateRangeFilter dateRange, CancellationToken cancellationToken)
         {
@@ -140,36 +139,24 @@ namespace Services.Jobs
                 CategoryType = null,
                 DateRangeFilter = dateRange
             };
-         
+
             var analytics = await budgetRepository.GetTotalTransactionsByBudgetAsync(filter, cancellationToken);
 
             return _mapper.Map<List<BudgetReportDTO>>(analytics);
         }
 
-        private async Task SendEmailReportAsync(AnalyticEmailRequestDTO emailReport, CancellationToken cancellationToken)
-        {
-            var client = _httpClientFactory.CreateClient(HttpClientNames.NotificationServiceName);
-
-            var response = await client.PostAsJsonAsync(sendWeeklyReports, emailReport, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogError($"Failed to send email report for {emailReport.RecipientName}. StatusCode: {response.StatusCode}");
-            }
-        }
-
-        private static double CalculatePercentage(double amount, double total)
-        {
-            return total > 0 ? (amount / total) * 100 : 0;
-        }
-
-        private static DateRangeFilter GetLastWeekDateRangeFilter()
+        protected static DateRangeFilter GetLastWeekDateRangeFilter()
         {
             return new DateRangeFilter
             {
                 From = DateTime.Today.AddDays(-7),
                 To = DateTime.Today
             };
+        }
+
+        protected static double CalculatePercentage(double amount, double total)
+        {
+            return total > 0 ? (amount / total) * 100 : 0;
         }
     }
 }
