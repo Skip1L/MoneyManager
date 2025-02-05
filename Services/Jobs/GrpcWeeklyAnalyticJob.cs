@@ -18,7 +18,7 @@ namespace Services.Jobs
         {
             var request = mapper.Map<SendEmailRequest>(emailReport);
 
-            var response = _grpcEmailClient.SendEmail(request);
+            var response = await _grpcEmailClient.SendEmailAsync(request, cancellationToken: cancellationToken);
 
             if (!response.Success)
             {
