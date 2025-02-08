@@ -4,6 +4,7 @@ using DAL.Repositories;
 using Domain.Entities;
 using Domain.Helpers;
 using Hangfire;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -58,6 +59,21 @@ builder.Services.AddHangfire(config =>
 });
 
 builder.Services.AddHangfireServer();
+
+builder.Services.AddMassTransit(opt =>
+{
+    opt.SetKebabCaseEndpointNameFormatter();
+
+    opt.UsingRabbitMq((context, config) =>
+    {
+        config.Host(builder.Configuration["NotificationService:RabbidMQUri"], "/", conf =>
+        {
+            conf.Username(builder.Configuration["NotificationService:RabbidMQUsername"] ?? "guest");
+            conf.Password(builder.Configuration["NotificationService:RabbidMQPassword"] ?? "guest");
+        });
+        config.ConfigureEndpoints(context);
+    });
+});
 
 builder.Services.AddGrpcClient<GrpcEmail.GrpcEmailClient>(client =>
 {
