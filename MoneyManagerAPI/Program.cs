@@ -4,6 +4,7 @@ using DAL.Repositories;
 using Domain.Entities;
 using Domain.Helpers;
 using Hangfire;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ using Serilog;
 using Services.Interfaces;
 using Services.Jobs.Constants;
 using Services.Mapping;
+using Services.Protos;
 using Services.RepositoryInterfaces;
 using Services.Services;
 
@@ -45,7 +47,11 @@ builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IAnalyticService, AnalyticService>();
 
-builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile), typeof(CategoryMapperProfile), typeof(TransactionMapperProfile), typeof(AnalyticMapperProfile));
+builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile),
+                               typeof(CategoryMapperProfile),
+                               typeof(TransactionMapperProfile),
+                               typeof(AnalyticMapperProfile),
+                               typeof(GrpcMappingProfile));
 
 builder.Services.AddHangfire(config =>
 {
@@ -53,6 +59,36 @@ builder.Services.AddHangfire(config =>
 });
 
 builder.Services.AddHangfireServer();
+
+builder.Services.AddMassTransit(opt =>
+{
+    opt.SetKebabCaseEndpointNameFormatter();
+
+    opt.UsingRabbitMq((context, config) =>
+    {
+        config.Host(builder.Configuration["NotificationService:RabbidMQUri"], "/", conf =>
+        {
+            conf.Username(builder.Configuration["NotificationService:RabbidMQUsername"] ?? "guest");
+            conf.Password(builder.Configuration["NotificationService:RabbidMQPassword"] ?? "guest");
+        });
+        config.ConfigureEndpoints(context);
+    });
+});
+
+builder.Services.AddGrpcClient<GrpcEmail.GrpcEmailClient>(client =>
+{
+    client.Address = new Uri(builder.Configuration["NotificationService:GrpcUri"] ?? "https://localhost:6001");
+}).AddCallCredentials((context, metadata) =>
+    {
+        var _token = Environment.GetEnvironmentVariable("NotificationApiKey");
+
+        if (!string.IsNullOrEmpty(_token))
+        {
+            metadata.Add("x-api-key", _token);
+        }
+
+        return Task.CompletedTask;
+    });
 
 builder.Services.AddHttpClient(HttpClientNames.NotificationServiceName, client =>
 {

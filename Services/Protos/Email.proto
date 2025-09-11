@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+option csharp_namespace = "Services.Protos";
+
+import "google/protobuf/timestamp.proto";
+
+service GrpcEmail {
+  rpc SendEmail (SendEmailRequest) returns (SendEmailResponse);
+}
+
+message SendEmailRequest {
+  string recipient_name = 1;
+  string to_email = 2;
+  repeated CategoryReport incomes = 3;
+  repeated CategoryReport expenses = 4;
+  repeated BudgetReport budgets = 5;
+  TransactionsSummary transactions_summary = 6;
+  DateRange date_range = 7;
+}
+
+message SendEmailResponse {
+  bool success = 1;
+}
+
+message CategoryReport {
+  string name = 1;
+  double amount = 2;
+  double percentage = 3;
+}
+
+message BudgetReport {
+  string name = 1;
+  double income = 2;
+  double expense = 3;
+}
+
+message TransactionsSummary {
+  double total_incomes = 1;
+  double total_expenses = 2;
+  double net_balance = 3;
+}
+
+message DateRange {
+  google.protobuf.Timestamp from = 1;
+  google.protobuf.Timestamp to = 2;
+}
