@@ -1,5 +1,4 @@
-﻿using Domain.Constants;
-using Hangfire;
+﻿using Hangfire;
 using Services.Jobs;
 
 namespace MoneyManagerAPI.Extensions
@@ -8,10 +7,11 @@ namespace MoneyManagerAPI.Extensions
     {
         public static void AddRecurringJobs(this IServiceProvider serviceProvider)
         {
-            RecurringJob.AddOrUpdate<RabbitMqWeeklyAnalyticJob>(
-                nameof(RabbitMqWeeklyAnalyticJob),
+            RecurringJob.AddOrUpdate<HttpWeeklyAnalyticJob>(
+                nameof(HttpWeeklyAnalyticJob),
                 job => job.Execute(),
                 Cron.Weekly(DayOfWeek.Monday, 9),
+                // "* * * * * *",
                 new RecurringJobOptions()
             );
         }

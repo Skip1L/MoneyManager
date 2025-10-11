@@ -1,8 +1,8 @@
-using System.Text;
 using DAL;
 using DAL.Repositories;
 using Domain.Entities;
 using Domain.Helpers;
+using DTOs.Exchanges;
 using Hangfire;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -10,30 +10,41 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MoneyManagerAPI.Configs;
 using MoneyManagerAPI.Extensions;
 using MoneyManagerAPI.Helpers;
 using MoneyManagerAPI.Middlewares;
 using Serilog;
 using Services.Interfaces;
+using Services.Jobs;
 using Services.Jobs.Constants;
 using Services.Mapping;
 using Services.Protos;
 using Services.RepositoryInterfaces;
 using Services.Services;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = Environment.GetEnvironmentVariable("MoneyManagerDBConnectionString")
-    ?? builder.Configuration.GetConnectionString("MoneyManagerDBConnectionString")
-    ?? "Server=(localdb)\\MSSQLLocalDB;Database=MoneyManagerDB;Trusted_Connection=True;";
-var hangfireConnectionString = Environment.GetEnvironmentVariable("HangfireDBConnectionString")
-    ?? builder.Configuration.GetConnectionString("HangfireDBConnectionString")
-    ?? "Server=(localdb)\\MSSQLLocalDB;Database=HangfireDB;Trusted_Connection=True;";
 
+builder.Configuration
+    .AddEnvironmentVariables("MONEYMANAGER_");
+
+builder.Services.Configure<DatabaseConfig>(builder.Configuration.GetSection("Database"));
+builder.Services.Configure<NotificationServiceConfig>(builder.Configuration.GetSection("NotificationService"));
+builder.Services.Configure<AuthConfig>(builder.Configuration.GetSection("Auth"));
+builder.Services.Configure<AdminConfig>(builder.Configuration.GetSection("Admin"));
+
+var databaseConfig = builder.Configuration.GetSection("Database").Get<DatabaseConfig>();
+var notificationConfig = builder.Configuration.GetSection("NotificationService").Get<NotificationServiceConfig>();
+var authConfig = builder.Configuration.GetSection("Auth").Get<AuthConfig>();
+var adminConfig = builder.Configuration.GetSection("Admin").Get<AdminConfig>();
+
+AuthOptionsHelper.Initialize(builder.Configuration);
 
 builder.Services.AddDbContext<ApplicationContext>(options =>
 {
     options
-        .UseSqlServer(connectionString)
+        .UseSqlServer(databaseConfig.MoneyManagerDB)
         .UseLazyLoadingProxies();
 });
 
@@ -47,6 +58,11 @@ builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IAnalyticService, AnalyticService>();
 
+builder.Services.AddScoped<GrpcWeeklyAnalyticJob>();
+builder.Services.AddScoped<HttpWeeklyAnalyticJob>();
+builder.Services.AddScoped<KafkaWeeklyAnalyticJob>();
+builder.Services.AddScoped<RabbitMqWeeklyAnalyticJob>();
+
 builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile),
                                typeof(CategoryMapperProfile),
                                typeof(TransactionMapperProfile),
@@ -55,10 +71,12 @@ builder.Services.AddAutoMapper(typeof(AuthorizationMapperProfile),
 
 builder.Services.AddHangfire(config =>
 {
-    config.UseSqlServerStorage(hangfireConnectionString);
+    config.UseSqlServerStorage(databaseConfig.HangfireDB);
 });
 
 builder.Services.AddHangfireServer();
+
+await builder.EnsureTopicExistsAsync(notificationConfig.KafkaUri, "analytic-email-created");
 
 builder.Services.AddMassTransit(opt =>
 {
@@ -66,25 +84,33 @@ builder.Services.AddMassTransit(opt =>
 
     opt.UsingRabbitMq((context, config) =>
     {
-        config.Host(builder.Configuration["NotificationService:RabbidMQUri"], "/", conf =>
+        config.Host(notificationConfig.RabbitMQUri, "/", conf =>
         {
-            conf.Username(builder.Configuration["NotificationService:RabbidMQUsername"] ?? "guest");
-            conf.Password(builder.Configuration["NotificationService:RabbidMQPassword"] ?? "guest");
+            conf.Username(notificationConfig.RabbitMQUsername);
+            conf.Password(notificationConfig.RabbitMQPassword);
         });
         config.ConfigureEndpoints(context);
+    });
+
+    opt.AddRider(rider =>
+    {
+        rider.AddProducer<string, AnalyticEmailCreated>("analytic-email-created");
+
+        rider.UsingKafka((ctx, k) =>
+        {
+            k.Host(notificationConfig.KafkaUri);
+        });
     });
 });
 
 builder.Services.AddGrpcClient<GrpcEmail.GrpcEmailClient>(client =>
 {
-    client.Address = new Uri(builder.Configuration["NotificationService:GrpcUri"] ?? "https://localhost:6001");
+    client.Address = new Uri(notificationConfig.GrpcUri);
 }).AddCallCredentials((context, metadata) =>
     {
-        var _token = Environment.GetEnvironmentVariable("NotificationApiKey");
-
-        if (!string.IsNullOrEmpty(_token))
+        if (!string.IsNullOrEmpty(authConfig.NotificationApiKey))
         {
-            metadata.Add("x-api-key", _token);
+            metadata.Add("x-api-key", authConfig.NotificationApiKey);
         }
 
         return Task.CompletedTask;
@@ -92,8 +118,8 @@ builder.Services.AddGrpcClient<GrpcEmail.GrpcEmailClient>(client =>
 
 builder.Services.AddHttpClient(HttpClientNames.NotificationServiceName, client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["NotificationService:Uri"] ?? "http://localhost:6002");
-    client.DefaultRequestHeaders.Add("x-api-key", Environment.GetEnvironmentVariable("NotificationApiKey"));
+    client.BaseAddress = new Uri(notificationConfig.HttpUri);
+    client.DefaultRequestHeaders.Add("x-api-key", authConfig.NotificationApiKey);
 });
 
 builder.Services.AddControllers();
@@ -116,10 +142,18 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
-    .WriteTo.Console()
+    .WriteTo.Console(
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}"
+    )
+    .WriteTo.File(
+        path: "logs/log-.txt",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 7,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+    )
+    .WriteTo.Debug()
     .CreateLogger();
 
 builder.Host.UseSerilog();
@@ -191,6 +225,10 @@ app.Services.AddRecurringJobs();
 
 app.MapControllers();
 
-await app.InitializeDbForIdentity();
+await app.InitializeDbForIdentity(adminConfig);
+
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow }));
+
+app.MapHealthChecks("/health");
 
 app.Run();

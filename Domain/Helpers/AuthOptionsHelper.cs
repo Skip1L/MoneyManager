@@ -1,32 +1,29 @@
-﻿namespace Domain.Helpers
+﻿using Microsoft.Extensions.Configuration;
+
+namespace Domain.Helpers
 {
     public static class AuthOptionsHelper
     {
-        public static string GetIssuer()
+        private static IConfiguration? _configuration;
+
+        public static void Initialize(IConfiguration configuration)
         {
-            return Environment.GetEnvironmentVariable("ISSUER") ?? "MoneyTrackerIssuer";
+            _configuration = configuration;
         }
 
-        public static string GetAudience()
-        {
-            return Environment.GetEnvironmentVariable("AUDIENCE") ?? "MoneyTrackerHost";
-        }
+        public static string GetIssuer() =>
+            _configuration?["Auth:Issuer"] ?? "MoneyTrackerIssuer";
 
-        public static string GetSecretKey()
-        {
-            return Environment.GetEnvironmentVariable("API_KEY") ?? "sjgienghs;vcsfrtuifs1)d56fdsaw67";
-        }
+        public static string GetAudience() =>
+            _configuration?["Auth:Audience"] ?? "MoneyTrackerHost";
+
+        public static string GetSecretKey() =>
+            _configuration?["Auth:SecretKey"] ?? "sjgienghs;vcsfrtuifs1)d56fdsaw67";
 
         public static int GetTokenExpirationTime()
         {
-            var stringValue = Environment.GetEnvironmentVariable("TOKEN_EXPIRATION_TIME") ?? "7200";
-
-            if (int.TryParse(stringValue, out var myNumber))
-            {
-                return myNumber;
-            }
-
-            return 7200;
+            var stringValue = _configuration?["Auth:TokenExpirationTime"] ?? "7200";
+            return int.TryParse(stringValue, out var result) ? result : 7200;
         }
     }
 }

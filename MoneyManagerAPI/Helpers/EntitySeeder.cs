@@ -2,18 +2,19 @@
 using Domain.Constants;
 using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using MoneyManagerAPI.Configs;
 
 namespace MoneyManagerAPI.Helpers
 {
     public static class EntitySeeder
     {
 
-        public static async Task InitializeDbForIdentity(this IApplicationBuilder app)
+        public static async Task InitializeDbForIdentity(this IApplicationBuilder app, AdminConfig adminConfig)
         {
             await InitializeDbForRoles(app);
 
-            var adminEmail = Environment.GetEnvironmentVariable("ADMIN_EMAIL") ?? "qwerty@gmail.com";
-            var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? "qwer1234";
+            var adminEmail = adminConfig.Email;
+            var adminPassword = adminConfig.Password;
 
             using var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>()?.CreateScope();
             var personManager = serviceScope?.ServiceProvider.GetRequiredService<UserManager<User>>()
@@ -28,9 +29,9 @@ namespace MoneyManagerAPI.Helpers
             {
                 UserName = adminEmail,
                 EmailConfirmed = true,
-                FirstName = Environment.GetEnvironmentVariable("ADMIN_FIRST_NAME") ?? "Illia",
-                LastName = Environment.GetEnvironmentVariable("ADMIN_LAST_NAME") ?? "Skipar",
-                PhoneNumber = Environment.GetEnvironmentVariable("ADMIN_PHONE_NUMBER") ?? "+380997379641",
+                FirstName = adminConfig.FirstName,
+                LastName = adminConfig.LastName,
+                PhoneNumber = adminConfig.PhoneNumber,
                 Email = adminEmail,
                 CreatedAt = DateTime.UtcNow,
                 DateOfBirth = new DateTime(2003, 8, 2),

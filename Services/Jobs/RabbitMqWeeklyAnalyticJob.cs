@@ -7,17 +7,18 @@ using Microsoft.Extensions.Logging;
 
 namespace Services.Jobs
 {
-    public class RabbitMqWeeklyAnalyticJob(ILogger<HttpWeeklyAnalyticJob> logger,
+    public class RabbitMqWeeklyAnalyticJob(ILogger<RabbitMqWeeklyAnalyticJob> logger,
                                            IServiceScopeFactory serviceScopeFactory,
                                            IPublishEndpoint publishEndpoint,
                                            IMapper mapper) : BaseWeeklyAnalyticJob(logger, serviceScopeFactory, mapper)
     {
         private readonly IPublishEndpoint _publishEndpoint = publishEndpoint;
+
         protected override async Task SendReportAsync(AnalyticEmailRequestDTO emailReport, CancellationToken cancellationToken)
         {
             await _publishEndpoint.Publish<AnalyticEmailCreated>(new
             {
-                Id = new Guid(),
+                Id = Guid.NewGuid(),
                 Budgets = emailReport.Budgets,
                 DateRange = emailReport.DateRange,
                 Expenses = emailReport.Expenses,

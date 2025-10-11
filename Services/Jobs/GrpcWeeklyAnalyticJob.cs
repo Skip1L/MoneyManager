@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using DTOs.NotidicationDTOs;
-using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Services.Protos;
