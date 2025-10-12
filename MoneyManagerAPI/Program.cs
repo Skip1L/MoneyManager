@@ -1,4 +1,6 @@
 using DAL;
+using DAL.Configs;
+using DAL.Extensions;
 using DAL.Repositories;
 using Domain.Entities;
 using Domain.Helpers;
@@ -200,6 +202,8 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
+await app.Services.EnsureDatabasesAndMigrationsAppliedAsync();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -221,14 +225,14 @@ app.UseAuthorization();
 
 app.UseHangfireDashboard();
 
-app.Services.AddRecurringJobs();
-
 app.MapControllers();
-
-await app.InitializeDbForIdentity(adminConfig);
 
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow }));
 
 app.MapHealthChecks("/health");
+
+app.Services.AddRecurringJobs();
+
+await app.InitializeDbForIdentity(adminConfig);
 
 app.Run();

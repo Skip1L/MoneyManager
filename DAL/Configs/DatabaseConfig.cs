@@ -1,4 +1,4 @@
-﻿namespace MoneyManagerAPI.Configs
+﻿namespace DAL.Configs
 {
     public class DatabaseConfig
     {

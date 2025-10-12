@@ -8,7 +8,6 @@ namespace MoneyManagerAPI.Helpers
 {
     public static class EntitySeeder
     {
-
         public static async Task InitializeDbForIdentity(this IApplicationBuilder app, AdminConfig adminConfig)
         {
             await InitializeDbForRoles(app);
