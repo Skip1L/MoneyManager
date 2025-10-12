@@ -108,20 +108,29 @@ builder.Services.AddMassTransit(opt =>
 builder.Services.AddGrpcClient<GrpcEmail.GrpcEmailClient>(client =>
 {
     client.Address = new Uri(notificationConfig.GrpcUri);
-}).AddCallCredentials((context, metadata) =>
+}).ConfigureChannel(o =>
+{
+    o.HttpHandler = new HttpClientHandler
     {
-        if (!string.IsNullOrEmpty(authConfig.NotificationApiKey))
-        {
-            metadata.Add("x-api-key", authConfig.NotificationApiKey);
-        }
+        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+    };
+}).AddCallCredentials((context, metadata) =>
+{
+    if (!string.IsNullOrEmpty(authConfig.NotificationApiKey))
+    {
+        metadata.Add("x-api-key", authConfig.NotificationApiKey);
+    }
 
-        return Task.CompletedTask;
-    });
+    return Task.CompletedTask;
+});
 
 builder.Services.AddHttpClient(HttpClientNames.NotificationServiceName, client =>
 {
     client.BaseAddress = new Uri(notificationConfig.HttpUri);
     client.DefaultRequestHeaders.Add("x-api-key", authConfig.NotificationApiKey);
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
 });
 
 builder.Services.AddControllers();
